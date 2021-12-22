@@ -5,4 +5,4 @@ venv/
 .cache
 *.json
 .env
-certs/*
+certs
