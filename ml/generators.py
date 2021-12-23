@@ -1,10 +1,15 @@
+"""
+Implements different generator classes
+"""
+
+
 import typing
 
 import tensorflow as tf
-from tensorflow.keras.layers import Layer, Dense, Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape
+from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape
 
 
-class ConvolutionalBlock(tf.Module):
+class UpSamplingBlock(tf.Module):
     """
     Performs convolutional up-sampling, followed by batch-normalization and then a Leaky Relu activation function.
     """
@@ -17,7 +22,7 @@ class ConvolutionalBlock(tf.Module):
             use_bias: bool = False,
             activation: str = None
     ):
-        super(ConvolutionalBlock, self).__init__()
+        super(UpSamplingBlock, self).__init__()
         self.n_channels = n_filters
         self.kernel_size = kernel_size
         self.strides = strides
@@ -77,31 +82,27 @@ class RGBImageGenerator(tf.Module):
             self,
             embedding_dimension: int = 8 * 8 * 32,
             reshape_into: typing.Tuple = (8, 8, 32),
-            text_dimension: int = 300,
             name: str = "rgb_image_generator"
     ):
         """
         Assumes that the generated images are squares.
-        :param image_dimension:
         :param embedding_dimension:
         :param reshape_into:
-        :param text_dimension:
         :param name:
         """
         super(RGBImageGenerator, self).__init__(name=name)
         self.embedding_dimension = embedding_dimension
-        self.text_dimension = text_dimension
         self.n_channels = 3  # rbg images
         self.reshape_into = reshape_into
 
         self.embedding_dense = Dense(embedding_dimension)
         self.convolutional_blocks = [
-            ConvolutionalBlock(512),  # 8, 8
-            ConvolutionalBlock(256, strides=(2, 2)),  # 16, 16
-            ConvolutionalBlock(128, strides=(2, 2)),  # 32, 32
-            ConvolutionalBlock(64, strides=(2, 2)),  # 64, 64
-            ConvolutionalBlock(32, strides=(2, 2)),  # 128, 128
-            ConvolutionalBlock(self.n_channels, strides=(2, 2), activation="sigmoid")  # 256, 256
+            UpSamplingBlock(512),  # 8, 8
+            UpSamplingBlock(256, strides=(2, 2)),  # 16, 16
+            UpSamplingBlock(128, strides=(2, 2)),  # 32, 32
+            UpSamplingBlock(64, strides=(2, 2)),  # 64, 64
+            UpSamplingBlock(32, strides=(2, 2)),  # 128, 128
+            UpSamplingBlock(self.n_channels, strides=(2, 2), activation="sigmoid")  # 256, 256
         ]
 
     def __call__(self, inputs, *args, **kwargs):
