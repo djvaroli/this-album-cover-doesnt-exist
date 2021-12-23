@@ -12,7 +12,6 @@ from data_collection.database import DB, SpotifyTrack, orm
 from data_collection import file_utils, spotify_utils
 
 
-@orm.db_session
 def store_tracks_in_db(tracks: List[dict]):
     """
     Given a list of tracks stores them in the database.
@@ -20,7 +19,13 @@ def store_tracks_in_db(tracks: List[dict]):
     :param tracks:
     :return:
     """
-    tracks_in_db = [SpotifyTrack(**track) for track in tracks]
+    for track in tracks:
+        try:
+            db_track = SpotifyTrack(**track)
+        except ValueError as e:
+            pass
+        except Exception as e:
+            pass
 
 
 def store_track_data_given_albums(source_filepath: str):
@@ -40,14 +45,14 @@ def store_track_data_given_albums(source_filepath: str):
             if SpotifyTrack.is_album_in_table(album["id"]):
                 continue
 
-        album_cover_url = album["image_url"]
-        album_tracks: List[Dict] = spotify_utils.get_album_tracks(spotify_client, album["id"])
-        for track in album_tracks:
-            track["album_cover_url"] = album_cover_url
-            track["album_name"] = album["name"]
-            track["album_id"] = album["id"]
+            album_cover_url = album["image_url"]
+            album_tracks: List[Dict] = spotify_utils.get_album_tracks(spotify_client, album["id"])
+            for track in album_tracks:
+                track["album_cover_url"] = album_cover_url
+                track["album_name"] = album["name"]
+                track["album_id"] = album["id"]
 
-        store_tracks_in_db(album_tracks)
+            store_tracks_in_db(album_tracks)
 
 
 if __name__ == '__main__':
