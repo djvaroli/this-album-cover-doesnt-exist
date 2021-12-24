@@ -73,7 +73,55 @@ class UpSamplingBlock(tf.Module):
         return outputs
 
 
-class RGBImageGeneratorWithTextPrompt(tf.Module):
+class RGBImageGenerator(tf.Module):
+    """
+    Vanilla generator to be used in a GAN
+    """
+
+    def __init__(
+            self,
+            embedding_dimension: int = 8 * 8 * 32,
+            reshape_into: typing.Tuple = (8, 8, 32),
+            name: str = "rgb_image_generator"
+    ):
+        """
+        Assumes that the generated images are squares.
+        :param embedding_dimension:
+        :param reshape_into:
+        :param name:
+        """
+        super(RGBImageGenerator, self).__init__(name=name)
+        self.embedding_dimension = embedding_dimension
+        self.n_channels = 3  # rgb images
+        self.reshape_into = reshape_into
+
+        self.initial_dense = Dense(embedding_dimension, activation="relu")
+
+        self.convolutional_blocks = [
+            UpSamplingBlock(512),  # 8, 8
+            UpSamplingBlock(256, strides=(2, 2)),  # 16, 16
+            UpSamplingBlock(128, strides=(2, 2)),  # 32, 32
+            UpSamplingBlock(64, strides=(2, 2)),  # 64, 64
+            UpSamplingBlock(32, strides=(2, 2)),  # 128, 128
+            UpSamplingBlock(self.n_channels, strides=(2, 2), activation="sigmoid")  # 256, 256
+        ]
+
+    def __call__(self, inputs, *args, **kwargs):
+        """
+        Forward pass through the generator
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        outputs = self.initial_dense(inputs)
+        outputs = Reshape(self.reshape_into)(outputs)
+        for block in self.convolutional_blocks:
+            outputs = block(outputs, *args, **kwargs)
+
+        return outputs
+
+
+class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
     """
     Implements a vanilla GAN RGB image generator with the addition of accepting two separate tensors as inputs.
     The first tensor is the "noise" and the second tensor is an embedding of a text prompt.
@@ -92,23 +140,12 @@ class RGBImageGeneratorWithTextPrompt(tf.Module):
         :param reshape_into:
         :param name:
         """
-        super(RGBImageGeneratorWithTextPrompt, self).__init__(name=name)
-        self.embedding_dimension = embedding_dimension
-        self.n_channels = 3  # rbg images
-        self.reshape_into = reshape_into
+        super(RGBImageGeneratorWithTextPrompt, self).__init__(
+            name=name, embedding_dimension=embedding_dimension, reshape_into=reshape_into
+        )
 
         self.noise_dense = Dense(embedding_dimension, activation="relu")
         self.text_prompt_dense = Dense(embedding_dimension, activation="relu")
-        self.combined_dense = Dense(embedding_dimension, activation="relu")
-        
-        self.convolutional_blocks = [
-            UpSamplingBlock(512),  # 8, 8
-            UpSamplingBlock(256, strides=(2, 2)),  # 16, 16
-            UpSamplingBlock(128, strides=(2, 2)),  # 32, 32
-            UpSamplingBlock(64, strides=(2, 2)),  # 64, 64
-            UpSamplingBlock(32, strides=(2, 2)),  # 128, 128
-            UpSamplingBlock(self.n_channels, strides=(2, 2), activation="sigmoid")  # 256, 256
-        ]
 
     def __call__(self, inputs, *args, **kwargs):
         """
@@ -121,11 +158,6 @@ class RGBImageGeneratorWithTextPrompt(tf.Module):
         noise_input = self.noise_dense(noise_input)
         text_input = self.text_prompt_dense(text_input)
         outputs = Add([noise_input, text_input])
-        outputs = self.combined_dense(outputs)
 
-        outputs = Reshape(self.reshape_into)(outputs)
-        for block in self.convolutional_blocks:
-            outputs = block(outputs, *args, **kwargs)
-
-        return outputs
+        return super(RGBImageGeneratorWithTextPrompt, self).__call__(outputs, *args, **kwargs)
         
