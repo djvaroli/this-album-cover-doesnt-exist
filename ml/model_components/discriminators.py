@@ -77,6 +77,7 @@ class RGBImageDiscriminator(tf.Module):
 
     def __init__(
             self,
+            output_dense_activation: str = None,
             name="rgb_image_discriminator"
     ):
         super(RGBImageDiscriminator, self).__init__(name=name)
@@ -85,7 +86,7 @@ class RGBImageDiscriminator(tf.Module):
             DownSamplingBlock(128, strides=(2, 2)),
             DownSamplingBlock(256, strides=(2, 2))
         ]
-        self.output_dense = Dense(1, activation="sigmoid")
+        self.output_dense = Dense(1, activation=output_dense_activation)
 
     def __call__(self, inputs, *args, **kwargs):
         outputs = inputs

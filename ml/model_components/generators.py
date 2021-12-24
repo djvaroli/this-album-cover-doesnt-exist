@@ -6,7 +6,7 @@ Implements different generator classes
 import typing
 
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape
+from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape, Add
 
 
 class UpSamplingBlock(tf.Module):
@@ -73,16 +73,18 @@ class UpSamplingBlock(tf.Module):
         return outputs
 
 
-class RGBImageGenerator(tf.Module):
+class RGBImageGeneratorWithTextPrompt(tf.Module):
     """
-    Implements a vanilla GAN RGB image generator.
+    Implements a vanilla GAN RGB image generator with the addition of accepting two separate tensors as inputs.
+    The first tensor is the "noise" and the second tensor is an embedding of a text prompt.
+    The model will first pass both through a separate dense layer and then combine by addition.
     """
 
     def __init__(
             self,
             embedding_dimension: int = 8 * 8 * 32,
             reshape_into: typing.Tuple = (8, 8, 32),
-            name: str = "rgb_image_generator"
+            name: str = "rgb_image_generator_w_text_prompt"
     ):
         """
         Assumes that the generated images are squares.
@@ -90,12 +92,15 @@ class RGBImageGenerator(tf.Module):
         :param reshape_into:
         :param name:
         """
-        super(RGBImageGenerator, self).__init__(name=name)
+        super(RGBImageGeneratorWithTextPrompt, self).__init__(name=name)
         self.embedding_dimension = embedding_dimension
         self.n_channels = 3  # rbg images
         self.reshape_into = reshape_into
 
-        self.embedding_dense = Dense(embedding_dimension)
+        self.noise_dense = Dense(embedding_dimension, activation="relu")
+        self.text_prompt_dense = Dense(embedding_dimension, activation="relu")
+        self.combined_dense = Dense(embedding_dimension, activation="relu")
+        
         self.convolutional_blocks = [
             UpSamplingBlock(512),  # 8, 8
             UpSamplingBlock(256, strides=(2, 2)),  # 16, 16
@@ -112,9 +117,12 @@ class RGBImageGenerator(tf.Module):
         :param kwargs:
         :return:
         """
+        noise_input, text_input = inputs
+        noise_input = self.noise_dense(noise_input)
+        text_input = self.text_prompt_dense(text_input)
+        outputs = Add([noise_input, text_input])
+        outputs = self.combined_dense(outputs)
 
-        outputs = inputs
-        outputs = self.embedding_dense(outputs)  # embed the inputs
         outputs = Reshape(self.reshape_into)(outputs)
         for block in self.convolutional_blocks:
             outputs = block(outputs, *args, **kwargs)
