@@ -5,11 +5,14 @@ Implements different generator classes
 
 import typing
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape, Add
 
+from ml.utils import TFModuleExtension
 
-class UpSamplingBlock(tf.Module):
+
+class UpSamplingBlock(TFModuleExtension):
     """
     Performs convolutional up-sampling, followed by batch-normalization and then a Leaky Relu activation function.
     """
@@ -73,7 +76,7 @@ class UpSamplingBlock(tf.Module):
         return outputs
 
 
-class RGBImageGenerator(tf.Module):
+class ImageGenerator(tf.Module):
     """
     Vanilla generator to be used in a GAN
     """
@@ -82,29 +85,38 @@ class RGBImageGenerator(tf.Module):
             self,
             embedding_dimension: int = 8 * 8 * 32,
             reshape_into: typing.Tuple = (8, 8, 32),
-            name: str = "rgb_image_generator"
+            output_image_size: int = 256,
+            initial_filters: int = 512,
+            n_channels: int = 1,
+            name: str = "image_generator"
     ):
         """
         Assumes that the generated images are squares.
         :param embedding_dimension:
         :param reshape_into:
+        :param output_image_size: The dimensions of the generated images (assumes images are square)
+        :param initial_filters: the number of filters in the first UpSampling block
+        :param n_channels:
         :param name:
         """
-        super(RGBImageGenerator, self).__init__(name=name)
+        super(ImageGenerator, self).__init__(name=name)
+        self.n_channels = n_channels
         self.embedding_dimension = embedding_dimension
-        self.n_channels = 3  # rgb images
+        self.output_image_size = output_image_size
+        self.output_image_shape = (1, self.n_channels, self.output_image_size, self.output_image_size)
         self.reshape_into = reshape_into
 
         self.initial_dense = Dense(embedding_dimension, activation="relu")
 
-        self.convolutional_blocks = [
-            UpSamplingBlock(512),  # 8, 8
-            UpSamplingBlock(256, strides=(2, 2)),  # 16, 16
-            UpSamplingBlock(128, strides=(2, 2)),  # 32, 32
-            UpSamplingBlock(64, strides=(2, 2)),  # 64, 64
-            UpSamplingBlock(32, strides=(2, 2)),  # 128, 128
-            UpSamplingBlock(self.n_channels, strides=(2, 2), activation="sigmoid")  # 256, 256
-        ]
+        # this assumes a few things about shapes  TODO add tests to make ensure compatible shapes
+        n_upsmpl_blocks = int(np.log2(output_image_size // reshape_into[0]))
+        self.up_sampling_blocks = []
+        filters = initial_filters
+        for _ in range(n_upsmpl_blocks):
+            self.up_sampling_blocks.append(UpSamplingBlock(filters, strides=(2, 2)))
+            filters //= 2
+
+        self.up_sampling_blocks.append(UpSamplingBlock(n_filters=self.n_channels, strides=(1, 1), activation="sigmoid"))
 
     def __call__(self, inputs, *args, **kwargs):
         """
@@ -115,10 +127,41 @@ class RGBImageGenerator(tf.Module):
         """
         outputs = self.initial_dense(inputs)
         outputs = Reshape(self.reshape_into)(outputs)
-        for block in self.convolutional_blocks:
+        for block in self.up_sampling_blocks:
             outputs = block(outputs, *args, **kwargs)
 
         return outputs
+
+
+class RGBImageGenerator(ImageGenerator):
+    """
+    Vanilla generator to be used in a GAN
+    """
+
+    def __init__(
+            self,
+            embedding_dimension: int = 8 * 8 * 32,
+            reshape_into: typing.Tuple = (8, 8, 32),
+            output_image_size: int = 256,
+            initial_filters: int = 512,
+            name: str = "rgb_image_generator"
+    ):
+        """
+        Assumes that the generated images are squares.
+        :param embedding_dimension:
+        :param reshape_into:
+        :param output_image_size: The dimensions of the generated images (assumes images are square)
+        :param initial_filters: the number of filters in the first UpSampling block
+        :param name:
+        """
+        super(RGBImageGenerator, self).__init__(
+            embedding_dimension=embedding_dimension,
+            reshape_into=reshape_into,
+            output_image_size=output_image_size,
+            initial_filters=initial_filters,
+            name=name,
+            n_channels=3
+        )
 
 
 class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
@@ -132,6 +175,8 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
             self,
             embedding_dimension: int = 8 * 8 * 32,
             reshape_into: typing.Tuple = (8, 8, 32),
+            output_image_size: int = 256,
+            initial_filters: int = 512,
             name: str = "rgb_image_generator_w_text_prompt"
     ):
         """
@@ -141,7 +186,11 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         :param name:
         """
         super(RGBImageGeneratorWithTextPrompt, self).__init__(
-            name=name, embedding_dimension=embedding_dimension, reshape_into=reshape_into
+            name=name,
+            embedding_dimension=embedding_dimension,
+            reshape_into=reshape_into,
+            output_image_size=output_image_size,
+            initial_filters=initial_filters
         )
 
         self.noise_dense = Dense(embedding_dimension, activation="relu")

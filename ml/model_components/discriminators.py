@@ -7,8 +7,10 @@ import typing
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Dropout, Flatten
 
+from ml.utils import TFModuleExtension
 
-class DownSamplingBlock(tf.Module):
+
+class DownSamplingBlock(TFModuleExtension):
     """
     Applies convolutional down-sampling, followed by Dropout and LeakyRelu activation
     """
@@ -70,7 +72,7 @@ class DownSamplingBlock(tf.Module):
         return outputs
 
 
-class RGBImageDiscriminator(tf.Module):
+class ImageDiscriminator(tf.Module):
     """
     Implements a basic image discriminator
     """
@@ -78,9 +80,9 @@ class RGBImageDiscriminator(tf.Module):
     def __init__(
             self,
             output_dense_activation: str = None,
-            name="rgb_image_discriminator"
+            name: str = "rgb_image_discriminator"
     ):
-        super(RGBImageDiscriminator, self).__init__(name=name)
+        super(ImageDiscriminator, self).__init__(name=name)
         self.down_sampling_blocks = [
             DownSamplingBlock(64, strides=(2, 2)),
             DownSamplingBlock(128, strides=(2, 2)),

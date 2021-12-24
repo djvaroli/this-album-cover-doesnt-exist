@@ -21,5 +21,7 @@ def train_gan():
     generator_loss = generator_loss_w_noise
     discriminator_loss = discriminator_loss_w_noise
 
-    generator = generators.RGBImageGenerator()
-    discriminator = discriminators.RGBImageDiscriminator()
+    generator = generators.ImageGenerator(initial_filters=128, output_image_size=28, reshape_into=(7, 7, 256))
+    discriminator = discriminators.ImageDiscriminator()
+
+
