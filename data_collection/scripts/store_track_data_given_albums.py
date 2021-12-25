@@ -6,11 +6,15 @@ Then stores the track data in a SQL table.
 from argparse import ArgumentParser
 from typing import List, Dict
 import random
+import logging
 
 from tqdm import tqdm
 
 from data_collection.database import DB, SpotifyTrack, orm
 from data_collection import utils, spotify_utils
+
+logger = logging.getLogger("Store Tracks From Albums")
+logger.setLevel(logging.DEBUG)
 
 
 @orm.db_session
@@ -25,9 +29,9 @@ def store_tracks_in_db(tracks: List[dict]):
         try:
             db_track = SpotifyTrack(**track)
         except ValueError as e:
-            pass
+            logger.info(f"{e}")
         except Exception as e:
-            pass
+            logger.info(f"{e}")
 
 
 @orm.db_session
