@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape, Add
 
-from ml.model_components import TFModuleExtension
+from ml.model_components.common import TFModuleExtension
 
 
 class UpSamplingBlock(TFModuleExtension):
@@ -107,6 +107,8 @@ class ImageGenerator(tf.Module):
         self.output_image_size = output_image_size
         self.output_image_shape = (1, self.n_channels, self.output_image_size, self.output_image_size)
         self.reshape_into = reshape_into
+        self.output_activation = output_activation
+        self.initial_filters = initial_filters
 
         self.initial_dense = Dense(embedding_dimension, activation="relu")
 
@@ -133,6 +135,25 @@ class ImageGenerator(tf.Module):
             outputs = block(outputs, *args, **kwargs)
 
         return outputs
+
+    def get_config(self) -> dict:
+        """Returns a dictionary of configuration parameters
+
+        Returns:
+
+        """
+        config: dict = super(ImageGenerator, self).get_config()
+        config.update({
+            "name": self.name,
+            "n_channels": self.n_channels,
+            "embedding_dimension": self.embedding_dimension,
+            "output_image_size": self.output_image_size,
+            "output_image_shape": self.output_image_shape,
+            "reshape_into": self.reshape_into,
+            "output_activation": self.output_activation,
+            "initial_filters": self.initial_filters
+        })
+        return config
 
 
 class RGBImageGenerator(ImageGenerator):

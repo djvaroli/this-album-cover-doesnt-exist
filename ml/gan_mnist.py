@@ -22,17 +22,17 @@ def train_step(context: MNISTGANContext):
     """
     generator_namespace = context.generator_namespace
     discriminator_namespace = context.discriminator_namespace
-    generator_inputs = context.model_inputs
-    real_images = discriminator_namespace.image_batch
+    generator_inputs = generator_namespace.model_inputs
+    discriminator_inputs = discriminator_namespace.model_inputs
 
     with tf.GradientTape() as generator_tape, tf.GradientTape() as discriminator_tape:
         generated_images = generator_namespace.model(generator_inputs, training=True)
         
-        real_output = discriminator_namespace.model(real_images, training=True)
-        fake_output = discriminator_namespace.model(generated_images, training=True)
+        real_images_predictions = discriminator_namespace.model(discriminator_inputs, training=True)
+        generated_images_predictions = discriminator_namespace.model(generated_images, training=True)
 
-        generator_loss = generator_namespace.loss_fn(fake_output)
-        discriminator_loss = discriminator_namespace.loss_fn(real_output, fake_output)
+        generator_loss = generator_namespace.loss_fn(real_images_predictions)
+        discriminator_loss = discriminator_namespace.loss_fn(real_images_predictions, generated_images_predictions)
 
     gradients_of_generator = generator_tape.gradient(generator_loss, generator_namespace.model.trainable_variables)
     gradients_of_discriminator = discriminator_tape.gradient(
@@ -65,6 +65,7 @@ def train_gan():
     )
 
     context = MNISTGANContext(generator_namespace=generator_namespace, discriminator_namespace=discriminator_namespace)
+
 
 
 

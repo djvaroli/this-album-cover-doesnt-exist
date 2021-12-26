@@ -17,6 +17,31 @@ class _ModelNamespace:
         self.model = model
         self.optimizer = optimizer
         self.loss_fn = loss_fn
+        self.__model_inputs = None
+
+    @property
+    def model_inputs(self):
+        """
+        Returns the next set of inputs to the model
+        Returns:
+
+        """
+        return self.__model_inputs
+
+    @model_inputs.setter
+    def model_inputs(self, *args):
+        raise Exception("Please use the assign_inputs function instead.")
+
+    def assign_inputs(self, input_batch):
+        """
+        Assigns the next set of inputs to the model
+        Args:
+            input_batch:
+
+        Returns:
+
+        """
+        self.__model_inputs = input_batch
 
 
 class GeneratorNamespace(_ModelNamespace):
@@ -81,16 +106,18 @@ class MNISTGANContext(BaseModelTrainingContext):
         self.generator_namespace = generator_namespace
         self.discriminator_namespace = discriminator_namespace
 
-    def set_discriminator_images(self, images: np.ndarray):
+    def assign_inputs(self, generator_inputs: np.ndarray, discriminator_inputs: np.ndarray):
         """
-        Sets the images to be used as input to the discriminator
+        Sets the next batch of inputs for the generator and discriminator
         Args:
-            images:
+            generator_inputs:
+            discriminator_inputs:
 
         Returns:
 
         """
-        self.discriminator_namespace.set_image_batch(images)
+        self.generator_namespace.assign_inputs(generator_inputs)
+        self.discriminator_namespace.assign_inputs(discriminator_inputs)
         return self
 
 
