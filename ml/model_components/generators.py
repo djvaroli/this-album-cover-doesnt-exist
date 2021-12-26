@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape, Add
 
-from ml.utils import TFModuleExtension
+from ml.model_components import TFModuleExtension
 
 
 class UpSamplingBlock(TFModuleExtension):
@@ -88,7 +88,8 @@ class ImageGenerator(tf.Module):
             output_image_size: int = 256,
             initial_filters: int = 512,
             n_channels: int = 1,
-            name: str = "image_generator"
+            name: str = "image_generator",
+            output_activation: str = "sigmoid"
     ):
         """
         Assumes that the generated images are squares.
@@ -98,6 +99,7 @@ class ImageGenerator(tf.Module):
         :param initial_filters: the number of filters in the first UpSampling block
         :param n_channels:
         :param name:
+        :param output_activation: 
         """
         super(ImageGenerator, self).__init__(name=name)
         self.n_channels = n_channels
@@ -116,7 +118,7 @@ class ImageGenerator(tf.Module):
             self.up_sampling_blocks.append(UpSamplingBlock(filters, strides=(2, 2)))
             filters //= 2
 
-        self.up_sampling_blocks.append(UpSamplingBlock(n_filters=self.n_channels, strides=(1, 1), activation="sigmoid"))
+        self.up_sampling_blocks.append(UpSamplingBlock(n_filters=self.n_channels, strides=(1, 1), activation=output_activation))
 
     def __call__(self, inputs, *args, **kwargs):
         """
@@ -144,7 +146,8 @@ class RGBImageGenerator(ImageGenerator):
             reshape_into: typing.Tuple = (8, 8, 32),
             output_image_size: int = 256,
             initial_filters: int = 512,
-            name: str = "rgb_image_generator"
+            name: str = "rgb_image_generator",
+            output_activation: str = "sigmoid"
     ):
         """
         Assumes that the generated images are squares.
@@ -153,6 +156,7 @@ class RGBImageGenerator(ImageGenerator):
         :param output_image_size: The dimensions of the generated images (assumes images are square)
         :param initial_filters: the number of filters in the first UpSampling block
         :param name:
+        :param output_activation:
         """
         super(RGBImageGenerator, self).__init__(
             embedding_dimension=embedding_dimension,
@@ -160,7 +164,8 @@ class RGBImageGenerator(ImageGenerator):
             output_image_size=output_image_size,
             initial_filters=initial_filters,
             name=name,
-            n_channels=3
+            n_channels=3,
+            output_activation=output_activation
         )
 
 
@@ -177,20 +182,23 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
             reshape_into: typing.Tuple = (8, 8, 32),
             output_image_size: int = 256,
             initial_filters: int = 512,
-            name: str = "rgb_image_generator_w_text_prompt"
+            name: str = "rgb_image_generator_w_text_prompt",
+            output_activation: str = "sigmoid"
     ):
         """
         Assumes that the generated images are squares.
         :param embedding_dimension:
         :param reshape_into:
         :param name:
+        :param output_activation:
         """
         super(RGBImageGeneratorWithTextPrompt, self).__init__(
             name=name,
             embedding_dimension=embedding_dimension,
             reshape_into=reshape_into,
             output_image_size=output_image_size,
-            initial_filters=initial_filters
+            initial_filters=initial_filters,
+            output_activation=output_activation
         )
 
         self.noise_dense = Dense(embedding_dimension, activation="relu")

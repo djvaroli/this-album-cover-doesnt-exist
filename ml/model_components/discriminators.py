@@ -7,7 +7,7 @@ import typing
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Dropout, Flatten
 
-from ml.utils import TFModuleExtension
+from ml.model_components import TFModuleExtension
 
 
 class DownSamplingBlock(TFModuleExtension):
