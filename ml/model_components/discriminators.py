@@ -83,6 +83,8 @@ class ImageDiscriminator(tf.Module):
             name: str = "rgb_image_discriminator"
     ):
         super(ImageDiscriminator, self).__init__(name=name)
+        self.output_dense_activation = output_dense_activation
+
         self.down_sampling_blocks = [
             DownSamplingBlock(64, strides=(2, 2)),
             DownSamplingBlock(128, strides=(2, 2)),
@@ -97,3 +99,15 @@ class ImageDiscriminator(tf.Module):
 
         outputs = Flatten()(outputs)
         return self.output_dense(outputs)
+
+    def get_config(self) -> dict:
+        """Returns class configuration dictionary to enable serialization
+
+        Returns:
+
+        """
+        config: dict = super(ImageDiscriminator, self).get_config()
+        config.update({
+            "output_dense_activation": self.output_dense_activation
+        })
+        return config
