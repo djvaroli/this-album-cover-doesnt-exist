@@ -13,6 +13,7 @@ spotipy = "^2.19.0"
 pony = "^0.7.14"
 tensorflow = "2.5"
 pyinstrument = "^4.1.1"
+tqdm = "^4.62.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

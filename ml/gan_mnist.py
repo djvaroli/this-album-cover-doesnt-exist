@@ -8,47 +8,67 @@ from tqdm import tqdm
 
 from ml.model_components import generators, discriminators
 from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise
-from ml.training.contexts import BaseModelTrainingContext
+from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
 
 
+def train_step(context: MNISTGANContext):
+    """
 
-# Notice the use of `tf.function`
-# This annotation causes the function to be "compiled".
-@tf.function
-def train_step(images, context: BaseModelTrainingContext):
-    noise = tf.random.normal([context.batch_size, context.noise_dim])
+    Args:
+        context:
 
-    with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-      generated_images = context.generator(noise, training=True)
+    Returns:
 
-      real_output = context.discriminator(images, training=True)
-      fake_output = context.discriminator(generated_images, training=True)
+    """
+    generator_namespace = context.generator_namespace
+    discriminator_namespace = context.discriminator_namespace
+    generator_inputs = context.model_inputs
+    real_images = discriminator_namespace.image_batch
 
-      gen_loss = context.generator_loss(fake_output)
-      disc_loss = context.discriminator_loss(real_output, fake_output)
+    with tf.GradientTape() as generator_tape, tf.GradientTape() as discriminator_tape:
+        generated_images = generator_namespace.model(generator_inputs, training=True)
+        
+        real_output = discriminator_namespace.model(real_images, training=True)
+        fake_output = discriminator_namespace.model(generated_images, training=True)
 
-    gradients_of_generator = gen_tape.gradient(gen_loss, context.generator.trainable_variables)
-    gradients_of_discriminator = disc_tape.gradient(disc_loss, context.discriminator.trainable_variables)
+        generator_loss = generator_namespace.loss_fn(fake_output)
+        discriminator_loss = discriminator_namespace.loss_fn(real_output, fake_output)
 
-    context.generator_optimizer.apply_gradients(zip(gradients_of_generator, context.generator.trainable_variables))
-    context.discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, context.discriminator.trainable_variables))
-    
+    gradients_of_generator = generator_tape.gradient(generator_loss, generator_namespace.model.trainable_variables)
+    gradients_of_discriminator = discriminator_tape.gradient(
+        discriminator_loss, discriminator_namespace.model.trainable_variables
+    )
+
+    generator_namespace.optimizer.apply_gradients(
+        zip(gradients_of_generator, generator_namespace.model.trainable_variables)
+    )
+    discriminator_namespace.optimizer.apply_gradients(
+        zip(gradients_of_discriminator, discriminator_namespace.model.trainable_variables)
+    )
+
 
 def train_gan():
     """
 
     :return:
     """
+    generator_namespace = GeneratorNamespace(
+        model=generators.ImageGenerator(initial_filters=128, output_image_size=28, reshape_into=(7, 7, 256)),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=generator_loss_w_noise
+    )
 
-    generator_optimizer = tf.keras.optimizers.Adam(1e-4)
-    discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
+    discriminator_namespace = DiscriminatorNamespace(
+        model=discriminators.ImageDiscriminator(),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=discriminator_loss_w_noise
+    )
 
-    generator_loss = generator_loss_w_noise
-    discriminator_loss = discriminator_loss_w_noise
+    context = MNISTGANContext(generator_namespace=generator_namespace, discriminator_namespace=discriminator_namespace)
 
-    generator = generators.ImageGenerator(initial_filters=128, output_image_size=28, reshape_into=(7, 7, 256))
-    discriminator = discriminators.ImageDiscriminator()
-    
+
+
+
     
     
 
