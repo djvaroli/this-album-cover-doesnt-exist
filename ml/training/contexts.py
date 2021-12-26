@@ -6,6 +6,8 @@ from datetime import datetime as dt
 import tensorflow as tf
 import numpy as np
 
+import utils
+
 
 class _ModelNamespace:
     def __init__(
@@ -83,30 +85,64 @@ class BaseModelTrainingContext:
     def __init__(
             self,
             model_name: str,
+            batch_size: int,
+            epochs: int
     ):
-        self.model = model_name
-        self.model_inputs = None
+        self.model_name = model_name
+        self.batch_size = batch_size
         self.date: datetime.datetime = dt.now()
+        self.epochs = epochs
 
 
-class MNISTGANContext(BaseModelTrainingContext):
-    """[summary]
-
-    Args:
-        BaseModelTrainingContext ([type]): [description]
+class BaseGANTrainingContext(BaseModelTrainingContext):
     """
-    model_name = "mnist-gan-context"
+
+    """
 
     def __init__(
             self,
+            model_name: str,
+            batch_size: int,
+            noise_dimension: int,
+            epochs: int,
             generator_namespace: GeneratorNamespace,
             discriminator_namespace: DiscriminatorNamespace
     ):
-        super(MNISTGANContext, self).__init__(self.model_name)
+        super(BaseGANTrainingContext, self).__init__(model_name, batch_size, epochs)
+        self.noise_dimension = noise_dimension
         self.generator_namespace = generator_namespace
         self.discriminator_namespace = discriminator_namespace
+        self.__reference = None
+        self.loss_history = {
+            "generator_loss": np.zeros((epochs, 1000)),
+            "discriminator_loss": np.zeros((epochs, 1000))
+        }
+        self._step = 0
+        self._epoch = 0
 
-    def assign_inputs(self, generator_inputs: np.ndarray, discriminator_inputs: np.ndarray):
+    def track_loss(self, loss_: dict):
+        """
+
+        Args:
+            loss_:
+
+        Returns:
+
+        """
+        for key, value in loss_.items():
+            try:
+                self.loss_history[key][self._epoch, self._step] = value
+            except IndexError:
+                extension = np.zeros((self.epochs, 1000))
+                extended_loss_history = np.concatenate([self.loss_history[key], extension], axis=1)
+                extended_loss_history[self._epoch, self._step] = value
+                self.loss_history[key] = extended_loss_history
+
+    def assign_inputs(
+            self,
+            generator_inputs: typing.Union[np.ndarray, tf.Tensor],
+            discriminator_inputs: typing.Union[np.ndarray, tf.Tensor]
+    ):
         """
         Sets the next batch of inputs for the generator and discriminator
         Args:
@@ -119,5 +155,99 @@ class MNISTGANContext(BaseModelTrainingContext):
         self.generator_namespace.assign_inputs(generator_inputs)
         self.discriminator_namespace.assign_inputs(discriminator_inputs)
         return self
+
+    def generate_noise(self, mean: float = 0.0, stddev: float = 1.0, **kwargs) -> tf.Tensor:
+        """
+        Generates a tensor of samples of shape (BATCH_SIZE, NOISE_DIMENSION), where each entry is sampled
+        from a Gaussian distribution.
+        Returns:
+
+        """
+        return tf.random.normal((self.batch_size, self.noise_dimension), mean, stddev, **kwargs)
+
+    @property
+    def reference(self) -> tf.Tensor:
+        """
+        Returns a pre-generated tensor of Gaussian-distributed noise to be used as a reference when
+        evaluating the GAN
+        Returns:
+
+        """
+        return self.__reference
+
+    @reference.setter
+    def reference(self, *args):
+        """
+        The reference noise cannot be set as an attribute directly, but must be set using the
+        set_reference method.
+        Args:
+            *args:
+
+        Returns:
+
+        """
+        raise Exception("Reference cannot be set directly, please use BaseGANTrainingContext.set_reference method.")
+
+    def set_reference(self, size: int = 10, mean: float = 0.0, stddev: float = 1.0, **kwargs):
+        """Sets the reference noise to be used when evaluating the GAN
+
+        Args:
+            size:
+            mean:
+            stddev:
+            **kwargs:
+
+        Returns:
+
+        """
+        if self.reference is None:
+            self.__reference = tf.random.normal((size, self.noise_dimension), mean, stddev, **kwargs)
+        else:
+            raise Exception(
+                "Reference already set, please clear reference using BaseGANTrainingContext.clear_reference first."
+            )
+
+        return self.reference
+
+    def clear_reference(self):
+        """
+        Clears an existing reference
+        Returns:
+
+        """
+
+        self.__reference = None
+
+        return self
+
+    def on_epoch_end(self):
+        """
+
+        Returns:
+
+        """
+        self._epoch += 1
+        self._step = 0
+
+
+class MNISTGANContext(BaseGANTrainingContext):
+    """[summary]
+
+    Args:
+        BaseModelTrainingContext ([type]): [description]
+    """
+    model_name = "mnist-gan-context"
+
+    def __init__(
+            self,
+            batch_size: int,
+            noise_dimension: int,
+            epochs: int,
+            generator_namespace: GeneratorNamespace,
+            discriminator_namespace: DiscriminatorNamespace
+    ):
+        super(MNISTGANContext, self).__init__(
+            self.model_name, batch_size, noise_dimension, epochs, generator_namespace, discriminator_namespace)
+
 
 

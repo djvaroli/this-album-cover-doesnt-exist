@@ -4,6 +4,14 @@ from PIL import Image
 import numpy as np
 
 
+def grid_from_array():
+    """
+
+    Returns:
+
+    """
+    pass
+
 
 def array_to_image(arr: np.ndarray) -> Image:
     """Given a numpy array tries to convert into an image

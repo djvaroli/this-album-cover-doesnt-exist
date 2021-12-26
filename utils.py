@@ -1,7 +1,5 @@
 import typing
 import json
-import math
-from pathlib import Path
 
 
 def save_json(filepath: str, data) -> None:

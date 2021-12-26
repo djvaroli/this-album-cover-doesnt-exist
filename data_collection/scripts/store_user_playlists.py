@@ -5,7 +5,8 @@ A script that stores a list of all the playlists saved to a user's Spotify libra
 
 from argparse import ArgumentParser
 
-from data_collection import spotify_utils, utils
+from data_collection import spotify_utils
+import utils
 
 
 def main(out_filepath: str = "generated_files/playlists.json"):

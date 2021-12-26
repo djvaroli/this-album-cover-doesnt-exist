@@ -10,8 +10,9 @@ import logging
 
 from tqdm import tqdm
 
-from data_collection.database import DB, SpotifyTrack, orm
-from data_collection import utils, spotify_utils
+from data_collection.database import SpotifyTrack, orm
+from data_collection import spotify_utils
+import utils
 
 logger = logging.getLogger("Store Tracks From Albums")
 logger.setLevel(logging.DEBUG)
