@@ -10,7 +10,7 @@ from tqdm import tqdm
 from ml.model_components import generators, discriminators
 from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
-from monitoring import utilities
+from ml.monitoring import utilities
 
 
 def train_step(context: MNISTGANContext) -> dict:
@@ -56,6 +56,42 @@ def train_step(context: MNISTGANContext) -> dict:
     return step_loss
 
 
+def get_train_context(
+        batch_size: int,
+        noise_dimension: int,
+        epochs: int
+) -> MNISTGANContext:
+    """
+    Prepares and returns the MNISTGANContext to be used in the training procedure.
+    Returns:
+
+    """
+    generator_namespace = GeneratorNamespace(
+        model=generators.ImageGenerator(
+            initial_filters=128,
+            output_image_size=28,
+            reshape_into=(7, 7, 256),
+            embedding_dimension=7*7*256
+        ),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=generator_loss_w_noise
+    )
+
+    discriminator_namespace = DiscriminatorNamespace(
+        model=discriminators.ImageDiscriminator(),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=discriminator_loss_w_noise
+    )
+
+    return MNISTGANContext(
+        batch_size=batch_size,
+        noise_dimension=noise_dimension,
+        epochs=epochs,
+        generator_namespace=generator_namespace,
+        discriminator_namespace=discriminator_namespace
+    )
+
+
 def train_gan(
         batch_size: int = 64,
         noise_dimension: int = 1024,
@@ -71,25 +107,7 @@ def train_gan(
     Returns:
 
     """
-    generator_namespace = GeneratorNamespace(
-        model=generators.ImageGenerator(initial_filters=128, output_image_size=28, reshape_into=(7, 7, 256)),
-        optimizer=tf.keras.optimizers.Adam(1e-4),
-        loss_fn=generator_loss_w_noise
-    )
-
-    discriminator_namespace = DiscriminatorNamespace(
-        model=discriminators.ImageDiscriminator(),
-        optimizer=tf.keras.optimizers.Adam(1e-4),
-        loss_fn=discriminator_loss_w_noise
-    )
-
-    context = MNISTGANContext(
-        batch_size=batch_size,
-        noise_dimension=noise_dimension,
-        epochs=epochs,
-        generator_namespace=generator_namespace,
-        discriminator_namespace=discriminator_namespace
-    )
+    context = get_train_context(batch_size, noise_dimension, epochs)
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()

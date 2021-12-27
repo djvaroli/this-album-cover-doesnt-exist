@@ -1,7 +1,10 @@
 
-from PIL import Image
+# from PIL import Image
 
 import numpy as np
+
+class Image:
+    pass
 
 
 def grid_from_array():
