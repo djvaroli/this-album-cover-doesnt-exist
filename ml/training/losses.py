@@ -9,7 +9,7 @@ def _add_normal_noise(inputs, sttdev: float = 0.01, clip_min: float = 0.0, clip_
     return tf.clip_by_value(tf.random.normal(shape=inputs.shape, stddev=sttdev) + inputs, clip_min, clip_max)
 
 
-def discriminator_loss(real_output, fake_output, weights: typing.List[float] = None):
+def discriminator_loss(real_output, fake_output) -> tf.Tensor:
     """
     Loss function for vanilla discriminator
     :param real_output:
@@ -17,12 +17,9 @@ def discriminator_loss(real_output, fake_output, weights: typing.List[float] = N
     :return:
     """
 
-    if weights is None:
-        weights = [0.5, 0.5]
-
     real_loss = cross_entropy(tf.ones_like(real_output), real_output)
     fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
-    total_loss = weights[0] * real_loss + weights[1] * fake_loss
+    total_loss = 1/2 * real_loss + 1/2 * fake_loss
     return total_loss
 
 

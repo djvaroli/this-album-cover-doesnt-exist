@@ -34,12 +34,12 @@ def train_step(context: MNISTGANContext) -> dict:
         real_images_predictions = discriminator_namespace.model(discriminator_inputs, training=True)
         generated_images_predictions = discriminator_namespace.model(generated_images, training=True)
 
-        generator_loss = generator_namespace.loss_fn(real_images_predictions)
-        discriminator_loss = discriminator_namespace.loss_fn(real_images_predictions, generated_images_predictions)
+        generator_step_loss = generator_namespace.loss_fn(generated_images_predictions)
+        discriminator_step_loss = discriminator_namespace.loss_fn(real_images_predictions, generated_images_predictions)
 
-    gradients_of_generator = generator_tape.gradient(generator_loss, generator_namespace.model.trainable_variables)
+    gradients_of_generator = generator_tape.gradient(generator_step_loss, generator_namespace.model.trainable_variables)
     gradients_of_discriminator = discriminator_tape.gradient(
-        discriminator_loss, discriminator_namespace.model.trainable_variables
+        discriminator_step_loss, discriminator_namespace.model.trainable_variables
     )
 
     generator_namespace.optimizer.apply_gradients(
@@ -50,8 +50,8 @@ def train_step(context: MNISTGANContext) -> dict:
     )
 
     step_loss = {
-        "generator_loss": generator_loss,
-        "discriminator_loss": discriminator_loss
+        "generator_loss": generator_step_loss,
+        "discriminator_loss": discriminator_step_loss
     }
     return step_loss
 
