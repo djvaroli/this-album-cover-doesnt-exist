@@ -11,6 +11,7 @@ from ml.model_components import generators, discriminators
 from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
 from ml.monitoring import utilities
+from ml.training.data import get_mnist_dataset
 
 
 def train_step(context: MNISTGANContext) -> dict:
@@ -107,6 +108,7 @@ def train_gan(
     Returns:
 
     """
+    data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=lambda x: (x - 255.) / 255.)
     context = get_train_context(batch_size, noise_dimension, epochs)
 
     # this will have 10 samples, instead of the number of batches
