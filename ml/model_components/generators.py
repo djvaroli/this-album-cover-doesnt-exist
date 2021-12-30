@@ -6,7 +6,6 @@ Implements different generator classes
 import typing
 
 import numpy as np
-import tensorflow as tf
 from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape, Add
 
 from ml.model_components.common import TFModelExtension

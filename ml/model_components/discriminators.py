@@ -4,7 +4,6 @@ Implements different discriminator classes
 
 import typing
 
-import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Dropout, Flatten
 
 from ml.model_components.common import TFModelExtension

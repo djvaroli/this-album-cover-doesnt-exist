@@ -2,11 +2,13 @@
 Train a GAN to generate the mnist dataset.
 No text prompts just images.
 """
+from argparse import ArgumentParser
+
 import tensorflow as tf
 from tqdm import tqdm
 
 from ml.model_components import generators, discriminators
-from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise
+from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise, generator_loss, discriminator_loss
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
 from ml.utilities import image_utils, mlflow_utils
 from ml.training.data import get_mnist_dataset
@@ -61,13 +63,21 @@ def train_step(context: MNISTGANContext) -> dict:
 def get_train_context(
         batch_size: int,
         noise_dimension: int,
-        epochs: int
+        epochs: int,
+        noisy_loss: bool = False
 ) -> MNISTGANContext:
     """
     Prepares and returns the MNISTGANContext to be used in the training procedure.
     Returns:
 
     """
+    g_loss = generator_loss
+    d_loss = discriminator_loss
+
+    if noisy_loss:
+        g_loss = generator_loss_w_noise
+        d_loss = discriminator_loss_w_noise
+
     generator_namespace = GeneratorNamespace(
         model=generators.ImageGenerator(
             initial_filters=128,
@@ -76,13 +86,13 @@ def get_train_context(
             embedding_dimension=7*7*256
         ),
         optimizer=tf.keras.optimizers.Adam(1e-4),
-        loss_fn=generator_loss_w_noise
+        loss_fn=g_loss
     )
 
     discriminator_namespace = DiscriminatorNamespace(
         model=discriminators.ImageDiscriminator(),
         optimizer=tf.keras.optimizers.Adam(1e-4),
-        loss_fn=discriminator_loss_w_noise
+        loss_fn=d_loss
     )
 
     return MNISTGANContext(
@@ -97,7 +107,8 @@ def get_train_context(
 def train_gan(
         batch_size: int = 64,
         noise_dimension: int = 1024,
-        epochs: int = 10
+        epochs: int = 10,
+        noisy_loss: bool = False
 ):
     """
 
@@ -115,9 +126,10 @@ def train_gan(
     mlflow_client.log_param(run.info.run_id, "batch_size", batch_size)
     mlflow_client.log_param(run.info.run_id, "noise_dimension", noise_dimension)
     mlflow_client.log_param(run.info.run_id, "epochs", epochs)
+    mlflow_client.log_param(run.info.run_id, "noisy_loss", noisy_loss)
 
     data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=lambda x: (x - 255.) / 255.)
-    context = get_train_context(batch_size, noise_dimension, epochs)
+    context = get_train_context(batch_size, noise_dimension, epochs, noisy_loss)
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
@@ -137,6 +149,26 @@ def train_gan(
         reference_images = image_utils.make_image_grid(context.generator_namespace.model(reference, training=False))
         reference_images = image_utils.array_to_image(reference_images)
         mlflow_client.log_image(run.info.run_id, reference_images, f"epoch_{epoch}.png")
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--batch_size", type=int, default=64, help="The size of each batch of images."
+    )
+    parser.add_argument(
+        "--noise_dimension", type=int, default=1024, help="The size of the noise fed to the generator."
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=1, help="Number of epochs to train the model for."
+    )
+    parser.add_argument(
+        "--noisy_loss", default=False, action="store_true", help="Add noise in loss functions."
+    )
+
+    args = parser.parse_args().__dict__
+    train_gan(**args)
+
 
 
 
