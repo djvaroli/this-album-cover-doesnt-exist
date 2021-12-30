@@ -61,7 +61,7 @@ class TFModelExtension(Model, _TFReprClass):
         Returns:
 
         """
-        if self.__model is None and self.__input_layer_shape is not None:
+        if self.__model is None and self.input_layer_shape is not None:
             inputs = []
             input_layers_shapes = self.input_layer_shape
 
@@ -92,4 +92,3 @@ class TFModelExtension(Model, _TFReprClass):
             to_file = f"{self.model.name}.png"
 
         return tf.keras.utils.plot_model(self.model, to_file, show_shapes=show_shapes, *args, **kwargs)
-    
