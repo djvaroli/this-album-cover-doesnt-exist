@@ -7,10 +7,10 @@ import typing
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Dropout, Flatten
 
-from ml.model_components.common import TFModuleExtension
+from ml.model_components.common import TFModelExtension
 
 
-class DownSamplingBlock(TFModuleExtension):
+class DownSamplingBlock(TFModelExtension):
     """
     Applies convolutional down-sampling, followed by Dropout and LeakyRelu activation
     """
@@ -31,7 +31,7 @@ class DownSamplingBlock(TFModuleExtension):
         self.padding = padding
         self.use_bias = use_bias
 
-        self.layers = [
+        self.layers_ = [
             Conv2D(
                 n_filters,
                 kernel_size=kernel_size,
@@ -57,7 +57,7 @@ class DownSamplingBlock(TFModuleExtension):
             "use_bias": self.use_bias
         }
 
-    def __call__(self, inputs, *args, **kwargs):
+    def call(self, inputs, *args, **kwargs):
         """
         Forward pass through the layer.
         :param inputs:
@@ -66,13 +66,13 @@ class DownSamplingBlock(TFModuleExtension):
         :return:
         """
         outputs = inputs
-        for layer in self.layers:
+        for layer in self.layers_:
             outputs = layer(outputs)
 
         return outputs
 
 
-class ImageDiscriminator(tf.Module):
+class ImageDiscriminator(TFModelExtension):
     """
     Implements a basic image discriminator
     """
@@ -92,8 +92,12 @@ class ImageDiscriminator(tf.Module):
         ]
         self.output_dense = Dense(1, activation=output_dense_activation)
 
-    def __call__(self, inputs, *args, **kwargs):
-        outputs = inputs
+    def call(self, inputs, *args, **kwargs):
+        if isinstance(inputs, list):
+            outputs = inputs[0]
+        else:
+            outputs = inputs
+
         for block in self.down_sampling_blocks:
             outputs = block(outputs)
 

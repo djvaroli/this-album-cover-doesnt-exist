@@ -9,10 +9,10 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape, Add
 
-from ml.model_components.common import TFModuleExtension
+from ml.model_components.common import TFModelExtension
 
 
-class UpSamplingBlock(TFModuleExtension):
+class UpSamplingBlock(TFModelExtension):
     """
     Performs convolutional up-sampling, followed by batch-normalization and then a Leaky Relu activation function.
     """
@@ -33,7 +33,7 @@ class UpSamplingBlock(TFModuleExtension):
         self.use_bias = use_bias
         self.activation = activation
 
-        self.layers = [
+        self.layers_ = [
             Conv2DTranspose(
                 n_filters,
                 kernel_size=kernel_size,
@@ -61,7 +61,7 @@ class UpSamplingBlock(TFModuleExtension):
             "activation": self.activation
         }
 
-    def __call__(self, inputs, *args, **kwargs):
+    def call(self, inputs, *args, **kwargs):
         """
         Forward pass through the layer.
         :param inputs:
@@ -70,13 +70,13 @@ class UpSamplingBlock(TFModuleExtension):
         :return:
         """
         outputs = inputs
-        for layer in self.layers:
+        for layer in self.layers_:
             outputs = layer(outputs)
 
         return outputs
 
 
-class ImageGenerator(tf.Module):
+class ImageGenerator(TFModelExtension):
     """
     Vanilla generator to be used in a GAN
     """
@@ -122,14 +122,19 @@ class ImageGenerator(tf.Module):
 
         self.up_sampling_blocks.append(UpSamplingBlock(n_filters=self.n_channels, strides=(1, 1), activation=output_activation))
 
-    def __call__(self, inputs, *args, **kwargs):
+    def call(self, inputs, *args, **kwargs):
         """
         Forward pass through the generator
         :param args:
         :param kwargs:
         :return:
         """
-        outputs = self.initial_dense(inputs)
+        if isinstance(inputs, list):
+            outputs = inputs[0]
+        else:
+            outputs = inputs
+
+        outputs = self.initial_dense(outputs)
         outputs = Reshape(self.reshape_into)(outputs)
         for block in self.up_sampling_blocks:
             outputs = block(outputs, *args, **kwargs)
@@ -225,9 +230,10 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         self.noise_dense = Dense(embedding_dimension, activation="relu")
         self.text_prompt_dense = Dense(embedding_dimension, activation="relu")
 
-    def __call__(self, inputs, *args, **kwargs):
+    def call(self, inputs, *args, **kwargs):
         """
         Forward pass through the generator
+        :param inputs:
         :param args:
         :param kwargs:
         :return:
@@ -237,5 +243,5 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         text_input = self.text_prompt_dense(text_input)
         outputs = Add([noise_input, text_input])
 
-        return super(RGBImageGeneratorWithTextPrompt, self).__call__(outputs, *args, **kwargs)
+        return super(RGBImageGeneratorWithTextPrompt, self).call(outputs, *args, **kwargs)
         
