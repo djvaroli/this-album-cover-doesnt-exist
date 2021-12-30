@@ -10,7 +10,7 @@ from tqdm import tqdm
 from ml.model_components import generators, discriminators
 from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
-from ml.monitoring import utilities
+from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset
 
 
@@ -125,9 +125,9 @@ def train_gan(
             step_loss = train_step(context)
             context.track_loss(step_loss)
 
-            reference_images = utilities.grid_from_array(context.generator_namespace.model(reference, training=False))
-            reference_images = utilities.array_to_image(reference_images)
-            utilities.save_image(reference_images, f"{output_image_path}/epoch_{epoch}.png")
+            reference_images = image_utils.make_image_grid(context.generator_namespace.model(reference, training=False))
+            reference_images = image_utils.array_to_image(reference_images)
+            reference_images.save(f"{output_image_path}/epoch_{epoch}.png")
 
 
 
