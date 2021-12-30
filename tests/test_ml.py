@@ -78,9 +78,6 @@ def test_mnist_gan_train_step():
     generator_input_noise = context.generate_noise()
     context.assign_inputs(generator_input_noise, syntehtic_images)
     step_loss = train_step(context)
-    context.track_loss(step_loss)
-
-    logger.warning(f"{step_loss}")
 
 
 def test_make_image_grid():

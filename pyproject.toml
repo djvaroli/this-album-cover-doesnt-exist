@@ -16,6 +16,7 @@ pyinstrument = "^4.1.1"
 tqdm = "^4.62.3"
 ipython = "^7.30.1"
 Pillow = "^8.4.0"
+mlflow = "^1.22.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

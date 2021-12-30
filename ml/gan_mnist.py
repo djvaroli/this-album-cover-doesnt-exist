@@ -2,16 +2,17 @@
 Train a GAN to generate the mnist dataset.
 No text prompts just images.
 """
-import pathlib
-
 import tensorflow as tf
 from tqdm import tqdm
 
 from ml.model_components import generators, discriminators
 from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
-from ml.utilities import image_utils
+from ml.utilities import image_utils, mlflow_utils
 from ml.training.data import get_mnist_dataset
+
+
+EXPERIMENT_NAME = "GAN MNIST"
 
 
 def train_step(context: MNISTGANContext) -> dict:
@@ -108,27 +109,31 @@ def train_gan(
     Returns:
 
     """
+
+    mlflow_client, run = mlflow_utils.get_client_and_run_for_experiment(EXPERIMENT_NAME)
+
+    mlflow_client.log_param(run.info.run_id, "batch_size", batch_size)
+    mlflow_client.log_param(run.info.run_id, "noise_dimension", noise_dimension)
+    mlflow_client.log_param(run.info.run_id, "epochs", epochs)
+
     data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=lambda x: (x - 255.) / 255.)
     context = get_train_context(batch_size, noise_dimension, epochs)
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
 
-    output_image_path = pathlib.Path(f"{context.model_name}-{int(context.date.timestamp())}")
-    if output_image_path.exists() is False:
-        output_image_path.mkdir()
-
     for epoch in range(epochs):
         for image_batch in tqdm(data):
             generator_input_noise = context.generate_noise()
             context.assign_inputs(generator_input_noise, image_batch)
             step_loss = train_step(context)
-            context.track_loss(step_loss)
 
-            reference_images = image_utils.make_image_grid(context.generator_namespace.model(reference, training=False))
-            reference_images = image_utils.array_to_image(reference_images)
-            reference_images.save(f"{output_image_path}/epoch_{epoch}.png")
+            mlflow_client.log_metric(run.info.run_id, "discriminator_loss", step_loss["generator_loss"].numpy())
+            mlflow_client.log_metric(run.info.run_id, "generator_loss", step_loss["discriminator_loss"].numpy())
 
+        reference_images = image_utils.make_image_grid(context.generator_namespace.model(reference, training=False))
+        reference_images = image_utils.array_to_image(reference_images)
+        mlflow_client.log_image(run.info.run_id, reference_images, f"epoch_{epoch}.png")
 
 
 

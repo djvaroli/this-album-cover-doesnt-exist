@@ -113,30 +113,6 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
         self.generator_namespace = generator_namespace
         self.discriminator_namespace = discriminator_namespace
         self.__reference = None
-        self.loss_history = {
-            "generator_loss": np.zeros((epochs, 1000)),
-            "discriminator_loss": np.zeros((epochs, 1000))
-        }
-        self._step = 0
-        self._epoch = 0
-
-    def track_loss(self, loss_: dict):
-        """
-
-        Args:
-            loss_:
-
-        Returns:
-
-        """
-        for key, value in loss_.items():
-            try:
-                self.loss_history[key][self._epoch, self._step] = value
-            except IndexError:
-                extension = np.zeros((self.epochs, 1000))
-                extended_loss_history = np.concatenate([self.loss_history[key], extension], axis=1)
-                extended_loss_history[self._epoch, self._step] = value
-                self.loss_history[key] = extended_loss_history
 
     def assign_inputs(
             self,
