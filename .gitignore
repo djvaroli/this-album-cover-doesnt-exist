@@ -5,8 +5,8 @@ venv/
 .cache
 
 # directories
-ml_runs
-certs
+mlruns
+data_collection/database/certs
 
 # files
 *.json
