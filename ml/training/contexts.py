@@ -236,7 +236,7 @@ class MNISTGANContext(BaseGANTrainingContext):
     Args:
         BaseModelTrainingContext ([type]): [description]
     """
-    model_name = "mnist-gan-context"
+    model_name = "mnist-gan"
 
     def __init__(
             self,

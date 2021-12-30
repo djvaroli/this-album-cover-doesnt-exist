@@ -37,4 +37,4 @@ def array_to_image(arr: typing.Union[np.ndarray, tf.Tensor], *args, **kwargs) ->
 
     """
 
-    return tf.keras.utils.array_to_img(arr, *args, **kwargs)
+    return tf.keras.preprocessing.image.array_to_img(arr, *args, **kwargs)
