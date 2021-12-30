@@ -121,8 +121,11 @@ def train_gan(
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
+    reference_images = image_utils.make_image_grid(context.generator_namespace.model(reference, training=False))
+    reference_images = image_utils.array_to_image(reference_images)
+    mlflow_client.log_image(run.info.run_id, reference_images, f"epoch_0.png")
 
-    for epoch in range(epochs):
+    for epoch in range(1, epochs + 1):
         for image_batch in tqdm(data):
             generator_input_noise = context.generate_noise()
             context.assign_inputs(generator_input_noise, image_batch)

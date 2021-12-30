@@ -1,0 +1,4 @@
+artifact_location: file:///Users/danieljohnvaroli/Desktop/this-album-cover-does-not-exist/mlruns/1
+experiment_id: '1'
+lifecycle_stage: active
+name: GAN MNIST
