@@ -88,7 +88,8 @@ class ImageGenerator(TFModelExtension):
             initial_filters: int = 512,
             n_channels: int = 1,
             name: str = "image_generator",
-            output_activation: str = "sigmoid"
+            initial_dense_activation: str = None,
+            output_activation: str = "tanh"
     ):
         """
         Assumes that the generated images are squares.
@@ -98,10 +99,12 @@ class ImageGenerator(TFModelExtension):
         :param initial_filters: the number of filters in the first UpSampling block
         :param n_channels:
         :param name:
+        :param initial_dense_activation:
         :param output_activation: 
         """
         super(ImageGenerator, self).__init__(name=name)
         self.n_channels = n_channels
+        self.initial_dense_activation = initial_dense_activation
         self.embedding_dimension = embedding_dimension
         self.output_image_size = output_image_size
         self.output_image_shape = (1, self.n_channels, self.output_image_size, self.output_image_size)
@@ -109,7 +112,7 @@ class ImageGenerator(TFModelExtension):
         self.output_activation = output_activation
         self.initial_filters = initial_filters
 
-        self.initial_dense = Dense(embedding_dimension, activation="relu")
+        self.initial_dense = Dense(embedding_dimension, activation=initial_dense_activation)
 
         # this assumes a few things about shapes  TODO add tests to make ensure compatible shapes
         n_upsmpl_blocks = int(np.log2(output_image_size // reshape_into[0]))
@@ -119,7 +122,7 @@ class ImageGenerator(TFModelExtension):
             self.up_sampling_blocks.append(UpSamplingBlock(filters, strides=(2, 2)))
             filters //= 2
 
-        self.up_sampling_blocks.append(UpSamplingBlock(n_filters=self.n_channels, strides=(1, 1), activation=output_activation))
+        self.up_sampling_blocks.append(UpSamplingBlock(n_filters=self.n_channels, activation=output_activation))
 
     def call(self, inputs, *args, **kwargs):
         """
@@ -150,6 +153,7 @@ class ImageGenerator(TFModelExtension):
         config.update({
             "name": self.name,
             "n_channels": self.n_channels,
+            "initial_dense_activation": self.initial_dense_activation,
             "embedding_dimension": self.embedding_dimension,
             "output_image_size": self.output_image_size,
             "output_image_shape": self.output_image_shape,

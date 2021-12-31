@@ -116,6 +116,7 @@ def train_gan(
         batch_size:
         noise_dimension:
         epochs:
+        noisy_loss:
 
     Returns:
 
@@ -128,7 +129,7 @@ def train_gan(
     mlflow_client.log_param(run.info.run_id, "epochs", epochs)
     mlflow_client.log_param(run.info.run_id, "noisy_loss", noisy_loss)
 
-    data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=lambda x: (x - 255.) / 255.)
+    data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=lambda x: (x - 127.5) / 127.5)
     context = get_train_context(batch_size, noise_dimension, epochs, noisy_loss)
 
     # this will have 10 samples, instead of the number of batches
@@ -146,7 +147,10 @@ def train_gan(
             mlflow_client.log_metric(run.info.run_id, "discriminator_loss", step_loss["generator_loss"].numpy())
             mlflow_client.log_metric(run.info.run_id, "generator_loss", step_loss["discriminator_loss"].numpy())
 
-        reference_images = image_utils.make_image_grid(context.generator_namespace.model(reference, training=False))
+        model_prediction = context.generator_namespace.model(reference, training=False)
+
+        model_prediction = tf.cast(model_prediction * 127.5 + 127.5, tf.int16)
+        reference_images = image_utils.make_image_grid(model_prediction)
         reference_images = image_utils.array_to_image(reference_images)
         mlflow_client.log_image(run.info.run_id, reference_images, f"epoch_{epoch}.png")
 

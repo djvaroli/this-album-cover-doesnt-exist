@@ -29,6 +29,7 @@ class DownSamplingBlock(TFModelExtension):
         self.strides = strides
         self.padding = padding
         self.use_bias = use_bias
+        self.dropout_probability = dropout_probability
 
         self.layers_ = [
             Conv2D(
@@ -53,7 +54,8 @@ class DownSamplingBlock(TFModelExtension):
             "kernel_size": self.kernel_size,
             "strides": self.strides,
             "padding": self.padding,
-            "use_bias": self.use_bias
+            "use_bias": self.use_bias,
+            "dropout_probability": self.dropout_probability
         }
 
     def call(self, inputs, *args, **kwargs):
