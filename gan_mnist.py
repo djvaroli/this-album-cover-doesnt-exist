@@ -7,7 +7,8 @@ from argparse import ArgumentParser
 import tensorflow as tf
 from tqdm import tqdm
 
-from ml.model_components import generators, discriminators
+from ml.model_components.generators import ImageGenerator
+from ml.model_components.discriminators import ImageDiscriminator
 from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise, generator_loss, discriminator_loss
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
 from ml.utilities import image_utils, mlflow_utils
@@ -79,7 +80,7 @@ def get_train_context(
         d_loss = discriminator_loss_w_noise
 
     generator_namespace = GeneratorNamespace(
-        model=generators.ImageGenerator(
+        model=ImageGenerator(
             initial_filters=128,
             output_image_size=28,
             reshape_into=(7, 7, 256),
@@ -90,7 +91,7 @@ def get_train_context(
     )
 
     discriminator_namespace = DiscriminatorNamespace(
-        model=discriminators.ImageDiscriminator(),
+        model=ImageDiscriminator(),
         optimizer=tf.keras.optimizers.Adam(1e-4),
         loss_fn=d_loss
     )
