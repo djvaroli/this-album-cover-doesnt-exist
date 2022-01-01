@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 from tqdm import tqdm
 
-import utils
+from common.common import utils
 from data import spotify_utils
 
 
