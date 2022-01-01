@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy as np
 
 from ml.model_components import generators, discriminators
-from gan_mnist import train_step, get_train_context
+from ml.scripts.train_mnist_gan import train_step, get_train_context
 
 
 logger = logging.getLogger("ML Tests.")

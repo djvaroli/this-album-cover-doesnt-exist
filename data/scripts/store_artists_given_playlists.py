@@ -5,7 +5,7 @@ artists that are present in the playlist. Then stores the artist data in a JSON 
 
 from tqdm import tqdm
 
-from data_collection import spotify_utils
+from data import spotify_utils
 import utils
 
 
