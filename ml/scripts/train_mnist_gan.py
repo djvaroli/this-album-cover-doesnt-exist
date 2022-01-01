@@ -23,6 +23,10 @@ from ml.training.data import get_mnist_dataset
 
 
 EXPERIMENT_NAME = "GAN MNIST"
+PROCESSING_OPS = {
+    "normalize": lambda x: (x - 255.) / 255.,
+    "unit_range": lambda x: (x - 127.5) / 127.5
+}
 
 
 def train_step(context: MNISTGANContext) -> dict:
@@ -116,7 +120,8 @@ def train_gan(
         batch_size: int = 64,
         noise_dimension: int = 1024,
         epochs: int = 10,
-        noisy_loss: bool = False
+        noisy_loss: bool = False,
+        processing: str = "normalize"
 ):
     """
 
@@ -125,19 +130,21 @@ def train_gan(
         noise_dimension:
         epochs:
         noisy_loss:
+        processing: The kind of processing to apply to the MNIST images
+
 
     Returns:
 
     """
-
+    processing_op = PROCESSING_OPS.get(processing)
     mlflow_client, run = mlflow_utils.get_client_and_run_for_experiment(EXPERIMENT_NAME)
-
+    
     mlflow_client.log_param(run.info.run_id, "batch_size", batch_size)
     mlflow_client.log_param(run.info.run_id, "noise_dimension", noise_dimension)
     mlflow_client.log_param(run.info.run_id, "epochs", epochs)
     mlflow_client.log_param(run.info.run_id, "noisy_loss", noisy_loss)
 
-    data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=lambda x: (x - 127.5) / 127.5)
+    data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=processing_op)
     context = get_train_context(batch_size, noise_dimension, epochs, noisy_loss)
 
     # this will have 10 samples, instead of the number of batches
@@ -157,7 +164,7 @@ def train_gan(
 
         model_prediction = context.generator_namespace.model(reference, training=False)
 
-        model_prediction = tf.cast(model_prediction * 127.5 + 127.5, tf.int16)
+        model_prediction = tf.cast(image_utils.arr_to_rgb_range(model_prediction), tf.int16)
         reference_images = image_utils.make_image_grid(model_prediction)
         reference_images = image_utils.array_to_image(reference_images)
         mlflow_client.log_image(run.info.run_id, reference_images, f"epoch_{epoch}.png")
@@ -176,6 +183,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--noisy_loss", default=False, action="store_true", help="Add noise in loss functions."
+    )
+    parser.add_argument(
+        "--processing",
+        default="normalize",
+        help="Kind of processing to apply to image [normalize, unit_range]",
+        type=str
     )
 
     args = parser.parse_args().__dict__
