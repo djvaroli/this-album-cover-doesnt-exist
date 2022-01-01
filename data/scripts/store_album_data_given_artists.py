@@ -2,8 +2,8 @@ from argparse import ArgumentParser
 
 from tqdm import tqdm
 
-import utils
-from data_collection import spotify_utils
+from common.common import utils
+from data import spotify_utils
 
 
 def main(source_filepath: str = "generated_files/artists.json", out_filepath: str = "generated_files/albums.json"):

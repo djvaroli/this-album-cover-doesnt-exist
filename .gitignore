@@ -7,7 +7,7 @@ venv/
 
 # directories
 mlruns
-data_collection/database/certs
+data/database/certs
 
 # files
 *.json

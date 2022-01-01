@@ -18,6 +18,7 @@ Pillow = "^8.4.0"
 mlflow = "^1.22.0"
 wandb = "^0.12.9"
 tensorflow = "^2.7.0"
+common = { path = "./common/"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
