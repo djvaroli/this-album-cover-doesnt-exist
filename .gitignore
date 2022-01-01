@@ -1,8 +1,14 @@
 .idea/
 __pycache__/
 venv/
-
+.pytest_cache
 .cache
+.DS_Store
+
+# directories
+mlruns
+data_collection/database/certs
+
+# files
 *.json
 .env
-certs

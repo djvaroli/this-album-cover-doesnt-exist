@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from dotenv import load_dotenv
 
-from helpers import spotify_utils
+import spotify_utils
 
 load_dotenv()
 app = FastAPI()

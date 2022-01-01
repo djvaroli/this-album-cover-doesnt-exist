@@ -2,7 +2,8 @@ from argparse import ArgumentParser
 
 from tqdm import tqdm
 
-import spotify_utils, file_utils
+import utils
+from data_collection import spotify_utils
 
 
 def main(source_filepath: str = "generated_files/artists.json", out_filepath: str = "generated_files/albums.json"):
@@ -13,7 +14,7 @@ def main(source_filepath: str = "generated_files/artists.json", out_filepath: st
     :return:
     """
 
-    artists = file_utils.load_json(source_filepath)
+    artists = utils.load_json(source_filepath)
     print(f"Identified {len(artists)} total artists.")
 
     spotify_client = spotify_utils.get_spotify_client()
@@ -28,7 +29,7 @@ def main(source_filepath: str = "generated_files/artists.json", out_filepath: st
 
     print(f"Identified {len(seen_artists)} unique artists.")
 
-    file_utils.save_json(out_filepath, albums)
+    utils.save_json(out_filepath, albums)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ class SpotifyTrack(DB.Entity):
         """
 
         # if there's at least one track matching the album id, we consider that the whole album is in the Table
-        q = orm.select(track for track in cls if track.album_id == album_id)
+        q = cls.select(album_id=album_id)
         return len(q[:1]) > 0
 
 
