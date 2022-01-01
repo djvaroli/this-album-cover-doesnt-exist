@@ -3,6 +3,13 @@ Train a GAN to generate the mnist dataset.
 No text prompts just images.
 """
 from argparse import ArgumentParser
+import pathlib
+import sys
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = pathlib.Path(SCRIPT_DIR).parent.parent
+sys.path.append(str(ROOT))
 
 import tensorflow as tf
 from tqdm import tqdm
