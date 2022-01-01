@@ -138,11 +138,15 @@ def train_gan(
     """
     processing_op = PROCESSING_OPS.get(processing)
     mlflow_client, run = mlflow_utils.get_client_and_run_for_experiment(EXPERIMENT_NAME)
-    
-    mlflow_client.log_param(run.info.run_id, "batch_size", batch_size)
-    mlflow_client.log_param(run.info.run_id, "noise_dimension", noise_dimension)
-    mlflow_client.log_param(run.info.run_id, "epochs", epochs)
-    mlflow_client.log_param(run.info.run_id, "noisy_loss", noisy_loss)
+
+    mlflow_client.log_params(
+        run.info.run_id,
+        batch_size=batch_size,
+        noise_dimension=noise_dimension,
+        epochs=epochs,
+        noisy_loss=noisy_loss,
+        processing=processing
+    )
 
     data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=processing_op)
     context = get_train_context(batch_size, noise_dimension, epochs, noisy_loss)
