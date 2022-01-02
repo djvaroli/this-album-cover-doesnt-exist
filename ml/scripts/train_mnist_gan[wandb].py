@@ -160,12 +160,12 @@ def train_gan():
             step_loss = train_step(context)
 
         model_prediction = context.generator_namespace.model(reference, training=False)
-        model_prediction = tf.cast(image_utils.tensor_to_rgb_range(model_prediction), tf.int16)
+        model_prediction = image_utils.tensor_to_rgb_range(model_prediction)
         reference_images = image_utils.make_image_grid(model_prediction)
         reference_images = image_utils.array_to_image(reference_images)
 
-        wandb.log({"discriminator_loss", step_loss["generator_loss"].numpy()}, step=epoch)
-        wandb.log({"generator_loss", step_loss["generator_loss"].numpy()}, step=epoch)
+        wandb.log({"discriminator_loss": step_loss["discriminator_loss"].numpy()}, step=epoch)
+        wandb.log({"generator_loss": step_loss["generator_loss"].numpy()}, step=epoch)
         wandb.log({"reference_image": wandb.Image(reference_images)}, step=epoch)
 
 
