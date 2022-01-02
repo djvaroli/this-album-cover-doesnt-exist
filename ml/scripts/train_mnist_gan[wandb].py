@@ -13,12 +13,13 @@ sys.path.append(str(ROOT))
 
 import tensorflow as tf
 from tqdm import tqdm
+import wandb
 
 from ml.model_components.generators import ImageGenerator
 from ml.model_components.discriminators import ImageDiscriminator
 from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise, generator_loss, discriminator_loss
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
-from ml.utilities import image_utils, mlflow_utils
+from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset
 
 
@@ -116,13 +117,7 @@ def get_train_context(
     )
 
 
-def train_gan(
-        batch_size: int = 64,
-        noise_dimension: int = 1024,
-        epochs: int = 10,
-        noisy_loss: bool = False,
-        processing: str = "normalize"
-):
+def train_gan():
     """
 
     Args:
@@ -136,17 +131,16 @@ def train_gan(
     Returns:
 
     """
-    processing_op = PROCESSING_OPS.get(processing)
-    mlflow_client, run = mlflow_utils.get_client_and_run_for_experiment(EXPERIMENT_NAME)
+    batch_size = wandb.config.batch_size
+    noise_dimension = wandb.config.noise_dimension
+    epochs = wandb.config.epochs
+    noisy_loss = wandb.config.noisy_loss
+    processing = wandb.config.processing
 
-    mlflow_client.log_params(
-        run.info.run_id,
-        batch_size=batch_size,
-        noise_dimension=noise_dimension,
-        epochs=epochs,
-        noisy_loss=noisy_loss,
-        processing=processing
-    )
+    processing_op = PROCESSING_OPS.get(processing)
+
+    if processing_op is None:
+        raise Exception("Specified invalid image pre-processing operation.")
 
     data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=processing_op)
     context = get_train_context(batch_size, noise_dimension, epochs, noisy_loss)
@@ -155,23 +149,24 @@ def train_gan(
     reference = context.set_reference()
     reference_images = image_utils.make_image_grid(context.generator_namespace.model(reference, training=False))
     reference_images = image_utils.array_to_image(reference_images)
-    mlflow_client.log_image(run.info.run_id, reference_images, f"epoch_0.png")
+
+    wandb.log({"reference_image": wandb.Image(reference_images)}, step=0)
 
     for epoch in range(1, epochs + 1):
+        step_loss = {}
         for image_batch in tqdm(data):
             generator_input_noise = context.generate_noise()
             context.assign_inputs(generator_input_noise, image_batch)
             step_loss = train_step(context)
 
-            mlflow_client.log_metric(run.info.run_id, "discriminator_loss", step_loss["generator_loss"].numpy())
-            mlflow_client.log_metric(run.info.run_id, "generator_loss", step_loss["discriminator_loss"].numpy())
-
         model_prediction = context.generator_namespace.model(reference, training=False)
-
         model_prediction = tf.cast(image_utils.arr_to_rgb_range(model_prediction), tf.int16)
         reference_images = image_utils.make_image_grid(model_prediction)
         reference_images = image_utils.array_to_image(reference_images)
-        mlflow_client.log_image(run.info.run_id, reference_images, f"epoch_{epoch}.png")
+
+        wandb.log({"discriminator_loss", step_loss["generator_loss"].numpy()}, step=epoch)
+        wandb.log({"generator_loss", step_loss["generator_loss"].numpy()}, step=epoch)
+        wandb.log({"reference_image": wandb.Image(reference_images)}, step=epoch)
 
 
 if __name__ == "__main__":
@@ -195,9 +190,16 @@ if __name__ == "__main__":
         type=str
     )
 
-    args = parser.parse_args().__dict__
-    train_gan(**args)
+    args = parser.parse_args()
+    wandb.init(
+        project="this-album-cover-doesnt-exist",
+        entity="djvaroli",
+        tags=["baseline", "gan", "mnist"]
+    )
 
+    wandb.config.update(args)
+    train_gan()
+    wandb.finish()
 
 
 

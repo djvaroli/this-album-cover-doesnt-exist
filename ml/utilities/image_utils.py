@@ -9,6 +9,23 @@ import tensorflow as tf
 from PIL import Image
 
 
+def arr_to_rgb_range(arr: np.ndarray) -> np.ndarray:
+    """
+    Given an array with values in an arbitrary range, scales pixel values to be in valid format
+    for an image, i.e. each pixel value is rescaled to be in 0 -> 255 range.
+    Args:
+        arr:
+        rgb_mode:
+
+    Returns:
+
+    """
+    min_ = np.min(arr)
+    max_ = np.max(arr)
+    in_rgb_range = 255. * (arr - min_) / (max_ - min_)
+    return in_rgb_range.astype("int16")
+
+
 def make_image_grid(tensor: tf.Tensor) -> tf.Tensor:
     """Given a 4D tensor with dimensions [batch size, image height, image width, number of channels],
     returns a new tensor or array where each image has been stacked along the width axis.
