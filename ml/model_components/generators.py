@@ -6,7 +6,14 @@ Implements different generator classes
 import typing
 
 import numpy as np
-from tensorflow.keras.layers import Conv2DTranspose, BatchNormalization, LeakyReLU, Dense, Reshape, Add
+from tensorflow.keras.layers import (
+    Conv2DTranspose,
+    BatchNormalization,
+    LeakyReLU,
+    Dense,
+    Reshape,
+    Add,
+)
 
 from ml.model_components.common import TFModelExtension
 
@@ -15,14 +22,15 @@ class UpSamplingBlock(TFModelExtension):
     """
     Performs convolutional up-sampling, followed by batch-normalization and then a Leaky Relu activation function.
     """
+
     def __init__(
-            self,
-            n_filters: int,
-            kernel_size: typing.Tuple = (5, 5),
-            strides: typing.Tuple = (1, 1),
-            padding: str = "same",
-            use_bias: bool = False,
-            activation: str = None
+        self,
+        n_filters: int,
+        kernel_size: typing.Tuple = (5, 5),
+        strides: typing.Tuple = (1, 1),
+        padding: str = "same",
+        use_bias: bool = False,
+        activation: str = None,
     ):
         super(UpSamplingBlock, self).__init__()
         self.n_channels = n_filters
@@ -39,10 +47,10 @@ class UpSamplingBlock(TFModelExtension):
                 strides=strides,
                 padding=padding,
                 use_bias=use_bias,
-                activation=activation
+                activation=activation,
             ),
             BatchNormalization(),
-            LeakyReLU()
+            LeakyReLU(),
         ]
 
     def get_config(self):
@@ -57,7 +65,7 @@ class UpSamplingBlock(TFModelExtension):
             "strides": self.strides,
             "padding": self.padding,
             "use_bias": self.use_bias,
-            "activation": self.activation
+            "activation": self.activation,
         }
 
     def call(self, inputs, *args, **kwargs):
@@ -81,15 +89,15 @@ class ImageGenerator(TFModelExtension):
     """
 
     def __init__(
-            self,
-            embedding_dimension: int = 8 * 8 * 32,
-            reshape_into: typing.Tuple = (8, 8, 32),
-            output_image_size: int = 256,
-            initial_filters: int = 512,
-            n_channels: int = 1,
-            name: str = "image_generator",
-            initial_dense_activation: str = None,
-            output_activation: str = "tanh"
+        self,
+        embedding_dimension: int = 8 * 8 * 32,
+        reshape_into: typing.Tuple = (8, 8, 32),
+        output_image_size: int = 256,
+        initial_filters: int = 512,
+        n_channels: int = 1,
+        name: str = "image_generator",
+        initial_dense_activation: str = None,
+        output_activation: str = "tanh",
     ):
         """
         Assumes that the generated images are squares.
@@ -100,19 +108,26 @@ class ImageGenerator(TFModelExtension):
         :param n_channels:
         :param name:
         :param initial_dense_activation:
-        :param output_activation: 
+        :param output_activation:
         """
         super(ImageGenerator, self).__init__(name=name)
         self.n_channels = n_channels
         self.initial_dense_activation = initial_dense_activation
         self.embedding_dimension = embedding_dimension
         self.output_image_size = output_image_size
-        self.output_image_shape = (1, self.n_channels, self.output_image_size, self.output_image_size)
+        self.output_image_shape = (
+            1,
+            self.n_channels,
+            self.output_image_size,
+            self.output_image_size,
+        )
         self.reshape_into = reshape_into
         self.output_activation = output_activation
         self.initial_filters = initial_filters
 
-        self.initial_dense = Dense(embedding_dimension, activation=initial_dense_activation)
+        self.initial_dense = Dense(
+            embedding_dimension, activation=initial_dense_activation
+        )
 
         # this assumes a few things about shapes  TODO add tests to make ensure compatible shapes
         n_upsmpl_blocks = int(np.log2(output_image_size // reshape_into[0]))
@@ -122,7 +137,9 @@ class ImageGenerator(TFModelExtension):
             self.up_sampling_blocks.append(UpSamplingBlock(filters, strides=(2, 2)))
             filters //= 2
 
-        self.up_sampling_blocks.append(UpSamplingBlock(n_filters=self.n_channels, activation=output_activation))
+        self.up_sampling_blocks.append(
+            UpSamplingBlock(n_filters=self.n_channels, activation=output_activation)
+        )
 
     def call(self, inputs, *args, **kwargs):
         """
@@ -150,17 +167,19 @@ class ImageGenerator(TFModelExtension):
 
         """
         config: dict = super(ImageGenerator, self).get_config()
-        config.update({
-            "name": self.name,
-            "n_channels": self.n_channels,
-            "initial_dense_activation": self.initial_dense_activation,
-            "embedding_dimension": self.embedding_dimension,
-            "output_image_size": self.output_image_size,
-            "output_image_shape": self.output_image_shape,
-            "reshape_into": self.reshape_into,
-            "output_activation": self.output_activation,
-            "initial_filters": self.initial_filters
-        })
+        config.update(
+            {
+                "name": self.name,
+                "n_channels": self.n_channels,
+                "initial_dense_activation": self.initial_dense_activation,
+                "embedding_dimension": self.embedding_dimension,
+                "output_image_size": self.output_image_size,
+                "output_image_shape": self.output_image_shape,
+                "reshape_into": self.reshape_into,
+                "output_activation": self.output_activation,
+                "initial_filters": self.initial_filters,
+            }
+        )
         return config
 
 
@@ -170,13 +189,13 @@ class RGBImageGenerator(ImageGenerator):
     """
 
     def __init__(
-            self,
-            embedding_dimension: int = 8 * 8 * 32,
-            reshape_into: typing.Tuple = (8, 8, 32),
-            output_image_size: int = 256,
-            initial_filters: int = 512,
-            name: str = "rgb_image_generator",
-            output_activation: str = "sigmoid"
+        self,
+        embedding_dimension: int = 8 * 8 * 32,
+        reshape_into: typing.Tuple = (8, 8, 32),
+        output_image_size: int = 256,
+        initial_filters: int = 512,
+        name: str = "rgb_image_generator",
+        output_activation: str = "sigmoid",
     ):
         """
         Assumes that the generated images are squares.
@@ -194,7 +213,7 @@ class RGBImageGenerator(ImageGenerator):
             initial_filters=initial_filters,
             name=name,
             n_channels=3,
-            output_activation=output_activation
+            output_activation=output_activation,
         )
 
 
@@ -206,13 +225,13 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
     """
 
     def __init__(
-            self,
-            embedding_dimension: int = 8 * 8 * 32,
-            reshape_into: typing.Tuple = (8, 8, 32),
-            output_image_size: int = 256,
-            initial_filters: int = 512,
-            name: str = "rgb_image_generator_w_text_prompt",
-            output_activation: str = "sigmoid"
+        self,
+        embedding_dimension: int = 8 * 8 * 32,
+        reshape_into: typing.Tuple = (8, 8, 32),
+        output_image_size: int = 256,
+        initial_filters: int = 512,
+        name: str = "rgb_image_generator_w_text_prompt",
+        output_activation: str = "sigmoid",
     ):
         """
         Assumes that the generated images are squares.
@@ -227,7 +246,7 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
             reshape_into=reshape_into,
             output_image_size=output_image_size,
             initial_filters=initial_filters,
-            output_activation=output_activation
+            output_activation=output_activation,
         )
 
         self.noise_dense = Dense(embedding_dimension, activation="relu")
@@ -246,5 +265,6 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         text_input = self.text_prompt_dense(text_input)
         outputs = Add([noise_input, text_input])
 
-        return super(RGBImageGeneratorWithTextPrompt, self).call(outputs, *args, **kwargs)
-        
+        return super(RGBImageGeneratorWithTextPrompt, self).call(
+            outputs, *args, **kwargs
+        )

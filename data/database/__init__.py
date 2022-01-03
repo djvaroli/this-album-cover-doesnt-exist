@@ -13,10 +13,10 @@ MYSQL_CONFIG = {
     "user": os.environ["MYSQL_USER"],
     "passwd": os.environ["MYSQL_PASSWORD"],
     "host": os.environ["MYSQL_HOST"],
-    'ssl_ca': os.path.join(relative_root, 'certs/server-ca.cer'),
-    'ssl_cert': os.path.join(relative_root, 'certs/client-cert.cer'),
-    'ssl_key': os.path.join(relative_root, 'certs/client-key.cer'),
-    'db': "spotify_data"
+    "ssl_ca": os.path.join(relative_root, "certs/server-ca.cer"),
+    "ssl_cert": os.path.join(relative_root, "certs/client-cert.cer"),
+    "ssl_key": os.path.join(relative_root, "certs/client-key.cer"),
+    "db": "spotify_data",
 }
 
 DB = orm.Database()
@@ -25,5 +25,3 @@ from .tables import *
 
 DB.bind(**MYSQL_CONFIG)
 DB.generate_mapping(create_tables=True)
-
-

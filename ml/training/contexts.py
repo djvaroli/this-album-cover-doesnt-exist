@@ -9,10 +9,10 @@ import numpy as np
 
 class _ModelNamespace:
     def __init__(
-            self,
-            model: typing.Union[tf.keras.Model, tf.Module],
-            optimizer: tf.keras.optimizers.Optimizer,
-            loss_fn: typing.Callable
+        self,
+        model: typing.Union[tf.keras.Model, tf.Module],
+        optimizer: tf.keras.optimizers.Optimizer,
+        loss_fn: typing.Callable,
     ):
         self.model = model
         self.optimizer = optimizer
@@ -45,22 +45,19 @@ class _ModelNamespace:
 
 
 class GeneratorNamespace(_ModelNamespace):
-    """
+    """ """
 
-    """
     pass
 
 
 class DiscriminatorNamespace(_ModelNamespace):
-    """
-
-    """
+    """ """
 
     def __init__(
-            self,
-            model: typing.Union[tf.keras.Model, tf.Module],
-            optimizer: tf.keras.optimizers.Optimizer,
-            loss_fn: typing.Callable
+        self,
+        model: typing.Union[tf.keras.Model, tf.Module],
+        optimizer: tf.keras.optimizers.Optimizer,
+        loss_fn: typing.Callable,
     ):
         super(DiscriminatorNamespace, self).__init__(model, optimizer, loss_fn)
         self.image_batch = None
@@ -78,14 +75,9 @@ class DiscriminatorNamespace(_ModelNamespace):
 
 
 class BaseModelTrainingContext:
-    """[summary]
-    """
-    def __init__(
-            self,
-            model_name: str,
-            batch_size: int,
-            epochs: int
-    ):
+    """[summary]"""
+
+    def __init__(self, model_name: str, batch_size: int, epochs: int):
         self.model_name = model_name
         self.batch_size = batch_size
         self.date: datetime.datetime = dt.now()
@@ -93,18 +85,16 @@ class BaseModelTrainingContext:
 
 
 class BaseGANTrainingContext(BaseModelTrainingContext):
-    """
-
-    """
+    """ """
 
     def __init__(
-            self,
-            model_name: str,
-            batch_size: int,
-            noise_dimension: int,
-            epochs: int,
-            generator_namespace: GeneratorNamespace,
-            discriminator_namespace: DiscriminatorNamespace
+        self,
+        model_name: str,
+        batch_size: int,
+        noise_dimension: int,
+        epochs: int,
+        generator_namespace: GeneratorNamespace,
+        discriminator_namespace: DiscriminatorNamespace,
     ):
         super(BaseGANTrainingContext, self).__init__(model_name, batch_size, epochs)
         self.noise_dimension = noise_dimension
@@ -113,9 +103,9 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
         self.__reference = None
 
     def assign_inputs(
-            self,
-            generator_inputs: typing.Union[np.ndarray, tf.Tensor],
-            discriminator_inputs: typing.Union[np.ndarray, tf.Tensor]
+        self,
+        generator_inputs: typing.Union[np.ndarray, tf.Tensor],
+        discriminator_inputs: typing.Union[np.ndarray, tf.Tensor],
     ):
         """
         Sets the next batch of inputs for the generator and discriminator
@@ -130,14 +120,18 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
         self.discriminator_namespace.assign_inputs(discriminator_inputs)
         return self
 
-    def generate_noise(self, mean: float = 0.0, stddev: float = 1.0, **kwargs) -> tf.Tensor:
+    def generate_noise(
+        self, mean: float = 0.0, stddev: float = 1.0, **kwargs
+    ) -> tf.Tensor:
         """
         Generates a tensor of samples of shape (BATCH_SIZE, NOISE_DIMENSION), where each entry is sampled
         from a Gaussian distribution.
         Returns:
 
         """
-        return tf.random.normal((self.batch_size, self.noise_dimension), mean, stddev, **kwargs)
+        return tf.random.normal(
+            (self.batch_size, self.noise_dimension), mean, stddev, **kwargs
+        )
 
     @property
     def reference(self) -> tf.Tensor:
@@ -160,9 +154,13 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
         Returns:
 
         """
-        raise Exception("Reference cannot be set directly, please use BaseGANTrainingContext.set_reference method.")
+        raise Exception(
+            "Reference cannot be set directly, please use BaseGANTrainingContext.set_reference method."
+        )
 
-    def set_reference(self, size: int = 10, mean: float = 0.0, stddev: float = 1.0, **kwargs):
+    def set_reference(
+        self, size: int = 10, mean: float = 0.0, stddev: float = 1.0, **kwargs
+    ):
         """Sets the reference noise to be used when evaluating the GAN
 
         Args:
@@ -175,7 +173,9 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
 
         """
         if self.reference is None:
-            self.__reference = tf.random.normal((size, self.noise_dimension), mean, stddev, **kwargs)
+            self.__reference = tf.random.normal(
+                (size, self.noise_dimension), mean, stddev, **kwargs
+            )
         else:
             raise Exception(
                 "Reference already set, please clear reference using BaseGANTrainingContext.clear_reference first."
@@ -201,23 +201,28 @@ class MNISTGANContext(BaseGANTrainingContext):
     Args:
         BaseModelTrainingContext ([type]): [description]
     """
+
     model_name = "mnist-gan"
 
     def __init__(
-            self,
-            batch_size: int,
-            noise_dimension: int,
-            epochs: int,
-            generator_namespace: GeneratorNamespace,
-            discriminator_namespace: DiscriminatorNamespace,
-            label_smoothing: bool = False,
-            discriminator_noise: bool = False,
-            pre_processing: str = "unit_range",
+        self,
+        batch_size: int,
+        noise_dimension: int,
+        epochs: int,
+        generator_namespace: GeneratorNamespace,
+        discriminator_namespace: DiscriminatorNamespace,
+        label_smoothing: bool = False,
+        discriminator_noise: bool = False,
+        pre_processing: str = "unit_range",
     ):
         super(MNISTGANContext, self).__init__(
-            self.model_name, batch_size, noise_dimension, epochs, generator_namespace, discriminator_namespace)
+            self.model_name,
+            batch_size,
+            noise_dimension,
+            epochs,
+            generator_namespace,
+            discriminator_namespace,
+        )
         self.label_smoothing = label_smoothing
         self.discriminator_noise = discriminator_noise
         self.pre_processing = pre_processing
-
-

@@ -16,13 +16,13 @@ class DownSamplingBlock(TFModelExtension):
     """
 
     def __init__(
-            self,
-            n_filters: int,
-            kernel_size: typing.Tuple = (5, 5),
-            strides: typing.Tuple = (1, 1),
-            padding: str = "same",
-            use_bias: bool = False,
-            dropout_probability: float = 0.3
+        self,
+        n_filters: int,
+        kernel_size: typing.Tuple = (5, 5),
+        strides: typing.Tuple = (1, 1),
+        padding: str = "same",
+        use_bias: bool = False,
+        dropout_probability: float = 0.3,
     ):
         super(DownSamplingBlock, self).__init__()
         self.n_channels = n_filters
@@ -38,10 +38,10 @@ class DownSamplingBlock(TFModelExtension):
                 kernel_size=kernel_size,
                 strides=strides,
                 padding=padding,
-                use_bias=use_bias
+                use_bias=use_bias,
             ),
             Dropout(dropout_probability),
-            LeakyReLU()
+            LeakyReLU(),
         ]
 
     def get_config(self):
@@ -56,7 +56,7 @@ class DownSamplingBlock(TFModelExtension):
             "strides": self.strides,
             "padding": self.padding,
             "use_bias": self.use_bias,
-            "dropout_probability": self.dropout_probability
+            "dropout_probability": self.dropout_probability,
         }
 
     def call(self, inputs, *args, **kwargs):
@@ -80,10 +80,10 @@ class ImageDiscriminator(TFModelExtension):
     """
 
     def __init__(
-            self,
-            output_dense_activation: str = None,
-            name: str = "rgb_image_discriminator",
-            add_input_noise: bool = False
+        self,
+        output_dense_activation: str = None,
+        name: str = "rgb_image_discriminator",
+        add_input_noise: bool = False,
     ):
         super(ImageDiscriminator, self).__init__(name=name)
         self.output_dense_activation = output_dense_activation
@@ -91,7 +91,7 @@ class ImageDiscriminator(TFModelExtension):
         self.down_sampling_blocks = [
             DownSamplingBlock(64, strides=(2, 2)),
             DownSamplingBlock(128, strides=(2, 2)),
-            DownSamplingBlock(256, strides=(2, 2))
+            DownSamplingBlock(256, strides=(2, 2)),
         ]
         self.output_dense = Dense(1, activation=output_dense_activation)
 
@@ -117,7 +117,5 @@ class ImageDiscriminator(TFModelExtension):
 
         """
         config: dict = super(ImageDiscriminator, self).get_config()
-        config.update({
-            "output_dense_activation": self.output_dense_activation
-        })
+        config.update({"output_dense_activation": self.output_dense_activation})
         return config

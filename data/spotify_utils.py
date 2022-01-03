@@ -12,9 +12,9 @@ load_dotenv()
 
 
 def get_spotify_client(
-        scope: str = "user-read-private user-top-read playlist-read-private",
-        *args,
-        **kwargs
+    scope: str = "user-read-private user-top-read playlist-read-private",
+    *args,
+    **kwargs
 ) -> Spotify:
     """
     Returns an instance of spotify.Spotify with permission to access specified scopes
@@ -34,16 +34,13 @@ def get_users_playlists(spotify_client: Spotify, *args, **kwargs) -> List[Dict]:
     :return:
     """
     playlists = spotify_client.current_user_playlists(*args, **kwargs)["items"]
-    relevant_playlist_data = []  # playlist data comes with a lot of fields we don't need
-    return [
-        {"name": playlist["name"], "id": playlist["id"]} for playlist in playlists
-    ]
+    relevant_playlist_data = (
+        []
+    )  # playlist data comes with a lot of fields we don't need
+    return [{"name": playlist["name"], "id": playlist["id"]} for playlist in playlists]
 
 
-def get_album_tracks(
-        spotify_client: Spotify,
-        album_id: str
-) -> List[Dict]:
+def get_album_tracks(spotify_client: Spotify, album_id: str) -> List[Dict]:
     """
     Given an album id returns a list of tracks
     :param spotify_client:
@@ -57,9 +54,7 @@ def get_album_tracks(
 
 
 def get_artist_albums(
-        spotify_client: Spotify,
-        artist_id: str,
-        limit: int = 50
+    spotify_client: Spotify, artist_id: str, limit: int = 50
 ) -> List[Dict]:
     """
     Returns a list of Albums by the specified artist
@@ -75,15 +70,13 @@ def get_artist_albums(
             "name": album["name"],
             "id": album["id"],
             "image_url": album["images"][0]["url"] if album["images"] else "",
-        } for album in artist_albums
+        }
+        for album in artist_albums
     ]
 
 
 def get_playlist_tracks(
-        spotify_client: Spotify,
-        playlist_id: str,
-        *args,
-        **kwargs
+    spotify_client: Spotify, playlist_id: str, *args, **kwargs
 ) -> List[Dict]:
     """
     Given an id of Spotify playlist, returns a list of tracks in that playlist.
@@ -93,17 +86,14 @@ def get_playlist_tracks(
     :return:
     """
 
-    playlist_tracks = spotify_client.playlist_items(playlist_id=playlist_id, *args, **kwargs)["items"]
-    return [
-        {"name": track["name"], "id": track["id"]} for track in playlist_tracks
-    ]
+    playlist_tracks = spotify_client.playlist_items(
+        playlist_id=playlist_id, *args, **kwargs
+    )["items"]
+    return [{"name": track["name"], "id": track["id"]} for track in playlist_tracks]
 
 
 def get_playlist_artists(
-        spotify_client: Spotify,
-        playlist_id: str,
-        *args,
-        **kwargs
+    spotify_client: Spotify, playlist_id: str, *args, **kwargs
 ) -> List[Dict]:
     """
     Given an id of a Spotify playlist returns a list of artists in that playlist.
@@ -111,7 +101,9 @@ def get_playlist_artists(
     :param playlist_id:
     :return:
     """
-    playlist_tracks = spotify_client.playlist_items(playlist_id=playlist_id, *args, **kwargs)["items"]
+    playlist_tracks = spotify_client.playlist_items(
+        playlist_id=playlist_id, *args, **kwargs
+    )["items"]
     playlist_artists = []
     seen_artists = set()
     for track in playlist_tracks:
@@ -127,10 +119,7 @@ def get_playlist_artists(
 
 
 def get_playlist_albums(
-        spotify_client: Spotify,
-        playlist_id: str,
-        *args,
-        **kwargs
+    spotify_client: Spotify, playlist_id: str, *args, **kwargs
 ) -> List[Dict]:
     """
     Given an id of a Spotify playlist returns a list of albums in that playlist.
@@ -138,7 +127,9 @@ def get_playlist_albums(
     :param playlist_id:
     :return:
     """
-    playlist_tracks = spotify_client.playlist_items(playlist_id=playlist_id, *args, **kwargs)["items"]
+    playlist_tracks = spotify_client.playlist_items(
+        playlist_id=playlist_id, *args, **kwargs
+    )["items"]
     playlist_albums = []
     seen_albums = set()
     for track in playlist_tracks:
@@ -151,4 +142,3 @@ def get_playlist_albums(
         playlist_albums.append(dict(id=album_id, name=album_name))
 
     return playlist_albums
-

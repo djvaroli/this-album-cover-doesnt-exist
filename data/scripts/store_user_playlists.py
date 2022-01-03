@@ -26,7 +26,7 @@ if __name__ == "__main__":
         "--out_filepath",
         "path to the file where to save playlist data.",
         type=str,
-        default="generated_files/playlists.json"
+        default="generated_files/playlists.json",
     )
     args = parser.parse_args().__dict__
     main(**args)

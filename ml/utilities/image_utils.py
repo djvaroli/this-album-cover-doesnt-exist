@@ -21,7 +21,7 @@ def arr_to_rgb_range(arr: np.ndarray) -> np.ndarray:
     """
     min_ = np.min(arr)
     max_ = np.max(arr)
-    in_rgb_range = 255. * (arr - min_) / (max_ - min_)
+    in_rgb_range = 255.0 * (arr - min_) / (max_ - min_)
     return in_rgb_range.astype("int16")
 
 
@@ -37,7 +37,7 @@ def tensor_to_rgb_range(tensor: tf.Tensor) -> tf.Tensor:
     """
     min_ = tf.math.reduce_min(tensor)
     max_ = tf.math.reduce_max(tensor)
-    in_rgb_range = 255. * (tensor - min_) / (max_ - min_)
+    in_rgb_range = 255.0 * (tensor - min_) / (max_ - min_)
     return tf.cast(in_rgb_range, tf.int16)
 
 
