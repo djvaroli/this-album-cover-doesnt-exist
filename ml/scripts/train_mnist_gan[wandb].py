@@ -119,25 +119,17 @@ def get_train_context(
 
 def train_gan():
     """
-
-    Args:
-        batch_size:
-        noise_dimension:
-        epochs:
-        noisy_loss:
-        processing: The kind of processing to apply to the MNIST images
-
-
-    Returns:
-
     """
+
     batch_size = wandb.config.batch_size
     noise_dimension = wandb.config.noise_dimension
     epochs = wandb.config.epochs
     noisy_loss = wandb.config.noisy_loss
-    processing = wandb.config.processing
+    pre_processing = wandb.config.pre_processing
+    label_smoothing = wandb.config.label_smoothing
+    discriminator_noise = wandb.config.discriminator_noise
 
-    processing_op = PROCESSING_OPS.get(processing)
+    processing_op = PROCESSING_OPS.get(pre_processing)
 
     if processing_op is None:
         raise Exception("Specified invalid image pre-processing operation.")
@@ -172,6 +164,9 @@ def train_gan():
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
+        "config_file", type=str, default=None, help="Path to YAML file containing parameters for training run."
+    )
+    parser.add_argument(
         "--batch_size", type=int, default=64, help="The size of each batch of images."
     )
     parser.add_argument(
@@ -181,12 +176,15 @@ if __name__ == "__main__":
         "--epochs", type=int, default=1, help="Number of epochs to train the model for."
     )
     parser.add_argument(
-        "--noisy_loss", default=False, action="store_true", help="Add noise in loss functions."
+        "--label_smoothing", default=False, action="store_true", help="Add smoothing to labels fed to discriminator."
     )
     parser.add_argument(
-        "--processing",
-        default="normalize",
-        help="Kind of processing to apply to image [normalize, unit_range]",
+        "--discriminator_noise", default=False, action="store_true", help="Add noise to inputs to the discriminator."
+    )
+    parser.add_argument(
+        "--pre_processing",
+        default="unit_range",
+        help="Kind of pre-processing to apply to image [normalize, unit_range]",
         type=str
     )
 
