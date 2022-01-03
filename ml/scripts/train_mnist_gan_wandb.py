@@ -17,7 +17,7 @@ import wandb
 
 from ml.model_components.generators import ImageGenerator
 from ml.model_components.discriminators import ImageDiscriminator
-from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise, generator_loss, discriminator_loss
+from ml.training.losses import smoothed_discriminator_loss, generator_loss, discriminator_loss
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset
@@ -73,77 +73,16 @@ def train_step(context: MNISTGANContext) -> dict:
     return step_loss
 
 
-def get_train_context(
-        batch_size: int,
-        noise_dimension: int,
-        epochs: int,
-        noisy_loss: bool = False
-) -> MNISTGANContext:
+def train_gan(context: MNISTGANContext):
     """
-    Prepares and returns the MNISTGANContext to be used in the training procedure.
-    Returns:
-
-    """
-    g_loss = generator_loss
-    d_loss = discriminator_loss
-
-    if noisy_loss:
-        g_loss = generator_loss_w_noise
-        d_loss = discriminator_loss_w_noise
-
-    generator_namespace = GeneratorNamespace(
-        model=ImageGenerator(
-            initial_filters=128,
-            output_image_size=28,
-            reshape_into=(7, 7, 256),
-            embedding_dimension=7*7*256
-        ),
-        optimizer=tf.keras.optimizers.Adam(1e-4),
-        loss_fn=g_loss
-    )
-
-    discriminator_namespace = DiscriminatorNamespace(
-        model=ImageDiscriminator(),
-        optimizer=tf.keras.optimizers.Adam(1e-4),
-        loss_fn=d_loss
-    )
-
-    return MNISTGANContext(
-        batch_size=batch_size,
-        noise_dimension=noise_dimension,
-        epochs=epochs,
-        generator_namespace=generator_namespace,
-        discriminator_namespace=discriminator_namespace
-    )
-
-
-def train_gan():
     """
 
-    Args:
-        batch_size:
-        noise_dimension:
-        epochs:
-        noisy_loss:
-        processing: The kind of processing to apply to the MNIST images
-
-
-    Returns:
-
-    """
-    batch_size = wandb.config.batch_size
-    noise_dimension = wandb.config.noise_dimension
-    epochs = wandb.config.epochs
-    noisy_loss = wandb.config.noisy_loss
-    processing = wandb.config.processing
-
-    processing_op = PROCESSING_OPS.get(processing)
+    processing_op = PROCESSING_OPS.get(context.pre_processing)
 
     if processing_op is None:
         raise Exception("Specified invalid image pre-processing operation.")
 
-    data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=processing_op)
-    context = get_train_context(batch_size, noise_dimension, epochs, noisy_loss)
+    data = get_mnist_dataset(batch_size=context.batch_size, preprocess_fn=processing_op)
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
@@ -152,7 +91,7 @@ def train_gan():
 
     wandb.log({"reference_image": wandb.Image(reference_images)}, step=0)
 
-    for epoch in range(1, epochs + 1):
+    for epoch in range(1, context.epochs + 1):
         step_loss = {}
         for image_batch in tqdm(data):
             generator_input_noise = context.generate_noise()
@@ -181,12 +120,15 @@ if __name__ == "__main__":
         "--epochs", type=int, default=1, help="Number of epochs to train the model for."
     )
     parser.add_argument(
-        "--noisy_loss", default=False, action="store_true", help="Add noise in loss functions."
+        "--label_smoothing", default=False, action="store_true", help="Add smoothing to labels fed to discriminator."
     )
     parser.add_argument(
-        "--processing",
-        default="normalize",
-        help="Kind of processing to apply to image [normalize, unit_range]",
+        "--discriminator_noise", default=False, action="store_true", help="Add noise to inputs to the discriminator."
+    )
+    parser.add_argument(
+        "--pre_processing",
+        default="unit_range",
+        help="Kind of pre-processing to apply to image [normalize, unit_range]",
         type=str
     )
 
@@ -196,9 +138,43 @@ if __name__ == "__main__":
         entity="djvaroli",
         tags=["baseline", "gan", "mnist"]
     )
-
     wandb.config.update(args)
-    train_gan()
+
+    # set up the generator
+    generator_namespace = GeneratorNamespace(
+        model=ImageGenerator(
+            initial_filters=128,
+            output_image_size=28,
+            reshape_into=(7, 7, 256),
+            embedding_dimension=7*7*256
+        ),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=generator_loss
+    )
+
+    # set up the discriminator
+    d_loss = discriminator_loss
+    if wandb.config.label_smoothing:
+        d_loss = smoothed_discriminator_loss
+
+    discriminator_namespace = DiscriminatorNamespace(
+        model=ImageDiscriminator(add_input_noise=wandb.config.discriminator_noise),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=d_loss
+    )
+
+    context = MNISTGANContext(
+        batch_size=wandb.config.batch_size,
+        noise_dimension=wandb.config.noise_dimension,
+        epochs=wandb.config.epochs,
+        label_smoothing=wandb.config.label_smoothing,
+        pre_processing=wandb.config.pre_processing,
+        discriminator_noise=wandb.config.discriminator_noise,
+        generator_namespace=generator_namespace,
+        discriminator_namespace=discriminator_namespace
+    )
+
+    train_gan(context)
     wandb.finish()
 
 

@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from ml.model_components.generators import ImageGenerator
 from ml.model_components.discriminators import ImageDiscriminator
-from ml.training.losses import generator_loss_w_noise, discriminator_loss_w_noise, generator_loss, discriminator_loss
+from ml.training.losses import smoothed_discriminator_loss, generator_loss, discriminator_loss
 from ml.training.contexts import MNISTGANContext, GeneratorNamespace, DiscriminatorNamespace
 from ml.utilities import image_utils, mlflow_utils
 from ml.training.data import get_mnist_dataset
@@ -76,19 +76,15 @@ def get_train_context(
         batch_size: int,
         noise_dimension: int,
         epochs: int,
-        noisy_loss: bool = False
+        label_smoothing: bool = False,
+        pre_processing: str = "unit_range",
+        discriminator_noise: bool = False
 ) -> MNISTGANContext:
     """
     Prepares and returns the MNISTGANContext to be used in the training procedure.
     Returns:
 
     """
-    g_loss = generator_loss
-    d_loss = discriminator_loss
-
-    if noisy_loss:
-        g_loss = generator_loss_w_noise
-        d_loss = discriminator_loss_w_noise
 
     generator_namespace = GeneratorNamespace(
         model=ImageGenerator(
@@ -98,8 +94,12 @@ def get_train_context(
             embedding_dimension=7*7*256
         ),
         optimizer=tf.keras.optimizers.Adam(1e-4),
-        loss_fn=g_loss
+        loss_fn=generator_loss
     )
+
+    d_loss = discriminator_loss
+    if label_smoothing:
+        d_loss = smoothed_discriminator_loss
 
     discriminator_namespace = DiscriminatorNamespace(
         model=ImageDiscriminator(),
@@ -111,6 +111,9 @@ def get_train_context(
         batch_size=batch_size,
         noise_dimension=noise_dimension,
         epochs=epochs,
+        pre_processing=pre_processing,
+        label_smoothing=label_smoothing,
+        discriminator_noise=discriminator_noise,
         generator_namespace=generator_namespace,
         discriminator_namespace=discriminator_namespace
     )
@@ -120,8 +123,9 @@ def train_gan(
         batch_size: int = 64,
         noise_dimension: int = 1024,
         epochs: int = 10,
-        noisy_loss: bool = False,
-        processing: str = "normalize"
+        label_smoothing: bool = False,
+        discriminator_noise: bool = False,
+        pre_processing: str = "unit_range"
 ):
     """
 
@@ -129,14 +133,15 @@ def train_gan(
         batch_size:
         noise_dimension:
         epochs:
-        noisy_loss:
-        processing: The kind of processing to apply to the MNIST images
+        label_smoothing: Whether to use smooth labels when calculating discriminator loss
+        discriminator_noise: Whether to add noise to discriminator inputs
+        pre_processing: The kind of processing to apply to the MNIST images
 
 
     Returns:
 
     """
-    processing_op = PROCESSING_OPS.get(processing)
+    processing_op = PROCESSING_OPS.get(pre_processing)
     mlflow_client, run = mlflow_utils.get_client_and_run_for_experiment(EXPERIMENT_NAME)
 
     mlflow_client.log_params(
@@ -144,12 +149,20 @@ def train_gan(
         batch_size=batch_size,
         noise_dimension=noise_dimension,
         epochs=epochs,
-        noisy_loss=noisy_loss,
-        processing=processing
+        label_smoothing=label_smoothing,
+        pre_processing=pre_processing,
+        discriminator_noise=discriminator_noise
     )
 
     data = get_mnist_dataset(batch_size=batch_size, preprocess_fn=processing_op)
-    context = get_train_context(batch_size, noise_dimension, epochs, noisy_loss)
+    context = get_train_context(
+        batch_size=batch_size,
+        noise_dimension=noise_dimension,
+        epochs=epochs,
+        label_smoothing=label_smoothing,
+        discriminator_noise=discriminator_noise,
+        pre_processing=pre_processing
+    )
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
@@ -186,12 +199,15 @@ if __name__ == "__main__":
         "--epochs", type=int, default=1, help="Number of epochs to train the model for."
     )
     parser.add_argument(
-        "--noisy_loss", default=False, action="store_true", help="Add noise in loss functions."
+        "--label_smoothing", default=False, action="store_true", help="Add smoothing to labels fed to discriminator."
     )
     parser.add_argument(
-        "--processing",
-        default="normalize",
-        help="Kind of processing to apply to image [normalize, unit_range]",
+        "--discriminator_noise", default=False, action="store_true", help="Add noise to inputs to the discriminator."
+    )
+    parser.add_argument(
+        "--pre_processing",
+        default="unit_range",
+        help="Kind of pre-processing to apply to image [normalize, unit_range]",
         type=str
     )
 

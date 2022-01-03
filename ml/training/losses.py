@@ -33,16 +33,20 @@ def generator_loss(fake_output):
     return cross_entropy(tf.ones_like(fake_output), fake_output)
 
 
-def discriminator_loss_w_noise(real_output, fake_output):
+def smoothed_discriminator_loss(real_output, fake_output):
     """
-    Discriminator loss that applies normally distributed noise to labels
+    A loss function for a discriminator that applies smoothing to positive labels
+    in the form of random samples from a uniform distribution in the interval [0.05, 0.2].
+    Slight modification of work from https://arxiv.org/pdf/1606.03498.pdf
     :param real_output:
     :param fake_output:
     :return:
     """
-    real_output = _add_normal_noise(real_output)
-    fake_output = _add_normal_noise(fake_output)
-    return discriminator_loss(real_output, fake_output)
+    smoothed_ones = tf.ones_like(real_output) - tf.random.uniform(real_output.shape, minval=0.05, maxval=0.2)
+    real_loss = cross_entropy(smoothed_ones, real_output)
+    fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
+    total_loss = 1/2 * real_loss + 1/2 * fake_loss
+    return total_loss
 
 
 def generator_loss_w_noise(fake_output):
