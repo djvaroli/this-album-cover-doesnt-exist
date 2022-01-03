@@ -4,6 +4,7 @@ Implements different discriminator classes
 
 import typing
 
+import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Dropout, Flatten
 
 from ml.model_components.common import TFModelExtension
@@ -81,11 +82,12 @@ class ImageDiscriminator(TFModelExtension):
     def __init__(
             self,
             output_dense_activation: str = None,
-            name: str = "rgb_image_discriminator"
+            name: str = "rgb_image_discriminator",
+            add_input_noise: bool = False
     ):
         super(ImageDiscriminator, self).__init__(name=name)
         self.output_dense_activation = output_dense_activation
-
+        self.add_input_noise = add_input_noise
         self.down_sampling_blocks = [
             DownSamplingBlock(64, strides=(2, 2)),
             DownSamplingBlock(128, strides=(2, 2)),
@@ -93,11 +95,14 @@ class ImageDiscriminator(TFModelExtension):
         ]
         self.output_dense = Dense(1, activation=output_dense_activation)
 
-    def call(self, inputs, *args, **kwargs):
+    def call(self, inputs: tf.Tensor, *args, **kwargs):
         if isinstance(inputs, list):
             outputs = inputs[0]
         else:
             outputs = inputs
+
+        if self.add_input_noise:
+            outputs += tf.random.normal(outputs.shape)
 
         for block in self.down_sampling_blocks:
             outputs = block(outputs)

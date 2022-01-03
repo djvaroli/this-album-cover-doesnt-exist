@@ -158,7 +158,7 @@ if __name__ == "__main__":
         d_loss = smoothed_discriminator_loss
 
     discriminator_namespace = DiscriminatorNamespace(
-        model=ImageDiscriminator(),
+        model=ImageDiscriminator(add_input_noise=wandb.config.discriminator_noise),
         optimizer=tf.keras.optimizers.Adam(1e-4),
         loss_fn=d_loss
     )
