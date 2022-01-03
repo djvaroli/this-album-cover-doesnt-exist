@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
 
-  run-code-format:
+  run-code-formatting:
     runs-on: ubuntu-latest
 
     steps:
