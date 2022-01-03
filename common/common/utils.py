@@ -36,10 +36,12 @@ def batch_generator(list_: typing.List, batch_size: int = 10) -> typing.Generato
     :return:
     """
     for i in range(0, len(list_), batch_size):
-        yield list_[i:i + batch_size]
+        yield list_[i : i + batch_size]
 
 
-def list_into_batches(list_: typing.List, batch_size: int = 10) -> typing.List[typing.List]:
+def list_into_batches(
+    list_: typing.List, batch_size: int = 10
+) -> typing.List[typing.List]:
     """
     Given a list of elements, converts into a nested list with successive batches.
     :param list_:

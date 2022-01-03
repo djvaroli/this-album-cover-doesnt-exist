@@ -1,4 +1,3 @@
-
 from . import DB, orm
 
 
@@ -6,6 +5,7 @@ class SpotifyTrack(DB.Entity):
     """
     Table that contains the data related to spotify tracks.
     """
+
     track_id = orm.PrimaryKey(str, auto=False)
     track_name = orm.Required(str)
     album_name = orm.Required(str)
@@ -23,5 +23,3 @@ class SpotifyTrack(DB.Entity):
         # if there's at least one track matching the album id, we consider that the whole album is in the Table
         q = cls.select(album_id=album_id)
         return len(q[:1]) > 0
-
-

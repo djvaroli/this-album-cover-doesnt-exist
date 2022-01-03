@@ -9,7 +9,10 @@ from data import spotify_utils
 from common.common import utils
 
 
-def get_artists_from_playlist(source_filepath: str = "data/playlists.json", out_filepath: str = "data/artists.json"):
+def get_artists_from_playlist(
+    source_filepath: str = "data/playlists.json",
+    out_filepath: str = "data/artists.json",
+):
     """
     Given a file with a list of playlists fetches and saves all the artists in the playlists
     :param source_filepath:
@@ -20,11 +23,13 @@ def get_artists_from_playlist(source_filepath: str = "data/playlists.json", out_
     spotify_client = spotify_utils.get_spotify_client()
     artists = []
     for playlist in tqdm(playlists):
-        playlist_artists = spotify_utils.get_playlist_artists(spotify_client, playlist["id"])
+        playlist_artists = spotify_utils.get_playlist_artists(
+            spotify_client, playlist["id"]
+        )
         artists.extend(playlist_artists)
 
     utils.save_json(out_filepath, artists)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_artists_from_playlist()

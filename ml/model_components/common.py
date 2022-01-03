@@ -76,7 +76,9 @@ class TFModelExtension(Model, _TFReprClass):
 
         return self.__model
 
-    def plot(self, to_file: str = None, show_shapes: bool = True, *args, **kwargs) -> str:
+    def plot(
+        self, to_file: str = None, show_shapes: bool = True, *args, **kwargs
+    ) -> str:
         """Plots the model graph contained in the class
 
         Args:
@@ -91,4 +93,6 @@ class TFModelExtension(Model, _TFReprClass):
         if to_file is None:
             to_file = f"{self.model.name}.png"
 
-        return tf.keras.utils.plot_model(self.model, to_file, show_shapes=show_shapes, *args, **kwargs)
+        return tf.keras.utils.plot_model(
+            self.model, to_file, show_shapes=show_shapes, *args, **kwargs
+        )

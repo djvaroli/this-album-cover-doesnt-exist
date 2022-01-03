@@ -36,4 +36,3 @@ def authorization_callback():
     """
 
     return
-

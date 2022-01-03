@@ -25,7 +25,12 @@ def test_rgb_image_generator_call():
     sample_input = np.random.random((batch_size, noise_dimension))
 
     generated_images = generator(sample_input)
-    assert generated_images.shape == (batch_size, output_image_size, output_image_size, 3)
+    assert generated_images.shape == (
+        batch_size,
+        output_image_size,
+        output_image_size,
+        3,
+    )
 
 
 def test_rgb_image_generator_output_sizes():
@@ -58,15 +63,21 @@ def test_discriminator():
     add_input_noise = True
     sample_input = np.random.random((batch_size, image_size, image_size, 3))
     discriminator = discriminators.ImageDiscriminator(
-        output_dense_activation=output_dense_activation,
-        add_input_noise=add_input_noise
+        output_dense_activation=output_dense_activation, add_input_noise=add_input_noise
     )
 
     sample_output = discriminator(sample_input)
 
-    assert sample_output.shape == (batch_size, 1), f"Output size isn't as expected {sample_output.shape}"
-    assert np.max(sample_output.numpy().ravel()) <= 1.0, f"Max value in output array exceeds 1.0"
-    assert np.min(sample_output.numpy().ravel()) >= 0.0, "Min value in output array is below 0.0"
+    assert sample_output.shape == (
+        batch_size,
+        1,
+    ), f"Output size isn't as expected {sample_output.shape}"
+    assert (
+        np.max(sample_output.numpy().ravel()) <= 1.0
+    ), f"Max value in output array exceeds 1.0"
+    assert (
+        np.min(sample_output.numpy().ravel()) >= 0.0
+    ), "Min value in output array is below 0.0"
 
 
 def test_mnist_gan_train_step():
@@ -88,13 +99,19 @@ def test_make_image_grid():
     n_slices = 10
     image_size = 28
     n_channels = 1
-    scaling_factors = tf.reshape(tf.cast(tf.linspace(0, 1, n_slices), "float32"), (n_slices, 1, 1, n_channels))
+    scaling_factors = tf.reshape(
+        tf.cast(tf.linspace(0, 1, n_slices), "float32"), (n_slices, 1, 1, n_channels)
+    )
     test_images = tf.tile(scaling_factors, (1, image_size, image_size, n_channels))
 
-    assert test_images.shape == (n_slices, image_size, image_size, n_channels), "Image dimensions mismatch."
+    assert test_images.shape == (
+        n_slices,
+        image_size,
+        image_size,
+        n_channels,
+    ), "Image dimensions mismatch."
 
     unstacked_images = tf.unstack(test_images)
     grid_images = tf.concat(unstacked_images, axis=1)
 
     assert grid_images.shape == (image_size, image_size * n_slices, n_channels)
-

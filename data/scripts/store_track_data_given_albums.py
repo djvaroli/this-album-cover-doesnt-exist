@@ -45,7 +45,9 @@ def get_tracks_for_album_batch(album_batch: List[dict]) -> List[dict]:
     album_batch_tracks = []
 
     # renew the spotify client at every batch
-    spotify_client = spotify_utils.get_spotify_client(status_retries=5, requests_timeout=10)
+    spotify_client = spotify_utils.get_spotify_client(
+        status_retries=5, requests_timeout=10
+    )
     for album in album_batch:
 
         # first check if any tracks from the album are already in the database
@@ -53,7 +55,9 @@ def get_tracks_for_album_batch(album_batch: List[dict]) -> List[dict]:
             continue
 
         album_cover_url = album["image_url"]
-        album_tracks: List[Dict] = spotify_utils.get_album_tracks(spotify_client, album["id"])
+        album_tracks: List[Dict] = spotify_utils.get_album_tracks(
+            spotify_client, album["id"]
+        )
 
         for track in album_tracks:
             track["album_cover_url"] = album_cover_url
@@ -83,13 +87,13 @@ def store_track_data_given_albums(source_filepath: str):
         store_tracks_in_db(album_batch_tracks)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
         "--source_filepath",
         type=str,
         help="Path to JSON file where to find album data",
-        default="generated_files/albums.json"
+        default="generated_files/albums.json",
     )
 
     args = parser.parse_args().__dict__

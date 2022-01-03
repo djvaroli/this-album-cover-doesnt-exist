@@ -5,8 +5,12 @@ import tensorflow as tf
 cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 
-def _add_normal_noise(inputs, sttdev: float = 0.01, clip_min: float = 0.0, clip_max: float = 1.0):
-    return tf.clip_by_value(tf.random.normal(shape=inputs.shape, stddev=sttdev) + inputs, clip_min, clip_max)
+def _add_normal_noise(
+    inputs, sttdev: float = 0.01, clip_min: float = 0.0, clip_max: float = 1.0
+):
+    return tf.clip_by_value(
+        tf.random.normal(shape=inputs.shape, stddev=sttdev) + inputs, clip_min, clip_max
+    )
 
 
 def discriminator_loss(real_output, fake_output) -> tf.Tensor:
@@ -19,7 +23,7 @@ def discriminator_loss(real_output, fake_output) -> tf.Tensor:
 
     real_loss = cross_entropy(tf.ones_like(real_output), real_output)
     fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
-    total_loss = 1/2 * real_loss + 1/2 * fake_loss
+    total_loss = 1 / 2 * real_loss + 1 / 2 * fake_loss
     return total_loss
 
 
@@ -42,10 +46,12 @@ def smoothed_discriminator_loss(real_output, fake_output):
     :param fake_output:
     :return:
     """
-    smoothed_ones = tf.ones_like(real_output) - tf.random.uniform(real_output.shape, minval=0.05, maxval=0.2)
+    smoothed_ones = tf.ones_like(real_output) - tf.random.uniform(
+        real_output.shape, minval=0.05, maxval=0.2
+    )
     real_loss = cross_entropy(smoothed_ones, real_output)
     fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
-    total_loss = 1/2 * real_loss + 1/2 * fake_loss
+    total_loss = 1 / 2 * real_loss + 1 / 2 * fake_loss
     return total_loss
 
 

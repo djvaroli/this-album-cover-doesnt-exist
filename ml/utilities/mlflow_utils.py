@@ -27,7 +27,9 @@ class ExtendedMLflowClient(MlflowClient):
             super(ExtendedMLflowClient, self).log_param(run_id, k, v)
 
 
-def get_client_and_run_for_experiment(experiment_name: str) -> typing.Tuple[ExtendedMLflowClient, Run]:
+def get_client_and_run_for_experiment(
+    experiment_name: str,
+) -> typing.Tuple[ExtendedMLflowClient, Run]:
     """
 
     Args:

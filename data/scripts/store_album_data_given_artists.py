@@ -6,7 +6,10 @@ from common.common import utils
 from data import spotify_utils
 
 
-def main(source_filepath: str = "generated_files/artists.json", out_filepath: str = "generated_files/albums.json"):
+def main(
+    source_filepath: str = "generated_files/artists.json",
+    out_filepath: str = "generated_files/albums.json",
+):
     """
 
     :param source_filepath:
@@ -35,10 +38,16 @@ def main(source_filepath: str = "generated_files/artists.json", out_filepath: st
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
-        "--source_filepath", "Path to file where to find artist data.", type=str, default="generated_files/artists.json"
+        "--source_filepath",
+        "Path to file where to find artist data.",
+        type=str,
+        default="generated_files/artists.json",
     )
     parser.add_argument(
-        "--out_filepath", "Path to file where to save extracted album data", type=str, default="generated_files/albums.json"
+        "--out_filepath",
+        "Path to file where to save extracted album data",
+        type=str,
+        default="generated_files/albums.json",
     )
 
     args = parser.parse_args().__dict__
