@@ -194,15 +194,6 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
 
         return self
 
-    def on_epoch_end(self):
-        """
-
-        Returns:
-
-        """
-        self._epoch += 1
-        self._step = 0
-
 
 class MNISTGANContext(BaseGANTrainingContext):
     """[summary]
@@ -218,10 +209,15 @@ class MNISTGANContext(BaseGANTrainingContext):
             noise_dimension: int,
             epochs: int,
             generator_namespace: GeneratorNamespace,
-            discriminator_namespace: DiscriminatorNamespace
+            discriminator_namespace: DiscriminatorNamespace,
+            label_smoothing: bool = False,
+            discriminator_noise: bool = False,
+            pre_processing: str = "unit_range",
     ):
         super(MNISTGANContext, self).__init__(
             self.model_name, batch_size, noise_dimension, epochs, generator_namespace, discriminator_namespace)
-
+        self.label_smoothing = label_smoothing
+        self.discriminator_noise = discriminator_noise
+        self.pre_processing = pre_processing
 
 
