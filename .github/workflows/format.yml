@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
 
-  test-and-format:
+  run-code-format:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,4 +21,4 @@ jobs:
         run: python3 -m pip install black
 
       - name: Code Quality
-        run: poetry run black .
+        run:  python3 -m black .
