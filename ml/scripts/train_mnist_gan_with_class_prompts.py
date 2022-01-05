@@ -23,7 +23,7 @@ from ml.training.losses import (
     discriminator_loss,
 )
 from ml.training.contexts import (
-    MNISTGANContext,
+    MnistPromptGANContext,
     GeneratorNamespace,
     DiscriminatorNamespace,
 )
@@ -38,7 +38,7 @@ PROCESSING_OPS = {
 }
 
 
-def train_step(context: MNISTGANContext) -> dict:
+def train_step(context: MnistPromptGANContext) -> dict:
     """
 
     Args:
@@ -92,7 +92,7 @@ def train_step(context: MNISTGANContext) -> dict:
     return step_loss
 
 
-def train_gan(context: MNISTGANContext):
+def train_gan(context: MnistPromptGANContext):
     """ """
 
     processing_op = PROCESSING_OPS.get(context.pre_processing)
@@ -194,7 +194,7 @@ if __name__ == "__main__":
         loss_fn=d_loss,
     )
 
-    context = MNISTGANContext(
+    context = MnistPromptGANContext(
         batch_size=wandb.config.batch_size,
         noise_dimension=wandb.config.noise_dimension,
         epochs=wandb.config.epochs,

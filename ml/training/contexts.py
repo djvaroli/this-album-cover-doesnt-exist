@@ -134,7 +134,7 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
         )
 
     @property
-    def reference(self) -> tf.Tensor:
+    def reference(self):
         """
         Returns a pre-generated tensor of Gaussian-distributed noise to be used as a reference when
         evaluating the GAN
@@ -226,3 +226,53 @@ class MNISTGANContext(BaseGANTrainingContext):
         self.label_smoothing = label_smoothing
         self.discriminator_noise = discriminator_noise
         self.pre_processing = pre_processing
+
+
+class MnistPromptGANContext(BaseGANTrainingContext):
+    """[summary]
+
+    Args:
+        MnistPromptGANContext ([type]): [description]
+    """
+
+    model_name = "mnist-gan-with-prompts"
+
+    def __init__(
+        self,
+        batch_size: int,
+        noise_dimension: int,
+        epochs: int,
+        generator_namespace: GeneratorNamespace,
+        discriminator_namespace: DiscriminatorNamespace,
+        label_smoothing: bool = False,
+        discriminator_noise: bool = False,
+        pre_processing: str = "unit_range",
+    ):
+        super(MnistPromptGANContext, self).__init__(
+            self.model_name,
+            batch_size,
+            noise_dimension,
+            epochs,
+            generator_namespace,
+            discriminator_namespace,
+        )
+        self.label_smoothing = label_smoothing
+        self.discriminator_noise = discriminator_noise
+        self.pre_processing = pre_processing
+
+    def set_reference(
+        self, size: int = 10, mean: float = 0.0, stddev: float = 1.0, **kwargs
+    ) -> typing.Tuple[tf.Tensor, tf.Tensor]:
+        if self.reference is None:
+            reference_noise = tf.random.normal(
+                (size, self.noise_dimension), mean, stddev, **kwargs
+            )
+            labels = tf.expand_dims(tf.cast(tf.linspace(0, 9, num=10), tf.int16), axis=0)
+            reference_labels = tf.tile(labels, multiples=[size, 1])
+            self.__reference = [reference_noise, reference_labels]
+        else:
+            raise Exception(
+                "Reference already set, please clear reference using BaseGANTrainingContext.clear_reference first."
+            )
+
+        return self.reference
