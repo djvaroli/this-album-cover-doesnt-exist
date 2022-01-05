@@ -1,28 +1,10 @@
 import abc
 import typing
 from abc import ABC
-import yaml
 
 import tensorflow as tf
-from tensorflow.keras import layers
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-
-
-def _load_layer_config(filepath: str) -> dict:
-    with open(filepath, "r") as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-    return config
-
-
-def _get_layers_from_config(configuration: dict):
-    model_layers = []
-    layer_configuration = configuration.copy()["layers"]
-    for layer_config_ in layer_configuration:
-        type_ = layer_config_.pop("type")
-        layer = getattr(layers, type_)(**layer_config_)
-        model_layers.append(layer)
-    return model_layers
 
 
 def dict_to_kwarg_str(d: dict) -> str:
@@ -40,7 +22,6 @@ def dict_to_kwarg_str(d: dict) -> str:
         s += f"{k}={v},"
 
     return s[:-1]
-
 
 
 class _TFReprClass(ABC):
