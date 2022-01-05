@@ -104,7 +104,7 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
 
     def assign_inputs(
         self,
-        generator_inputs: typing.Union[np.ndarray, tf.Tensor],
+        generator_inputs: typing.Union[np.ndarray, tf.Tensor, typing.List[np.ndarray], typing.List[tf.Tensor]],
         discriminator_inputs: typing.Union[np.ndarray, tf.Tensor],
     ):
         """

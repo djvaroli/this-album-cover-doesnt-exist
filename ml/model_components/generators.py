@@ -260,10 +260,10 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         :param kwargs:
         :return:
         """
-        noise_input, text_input = inputs
+        noise_input, prompt_input = inputs
         noise_input = self.noise_dense(noise_input)
-        text_input = self.text_prompt_dense(text_input)
-        outputs = Add([noise_input, text_input])
+        prompt_input = self.text_prompt_dense(prompt_input)
+        outputs = Add([noise_input, prompt_input])
 
         return super(RGBImageGeneratorWithTextPrompt, self).call(
             outputs, *args, **kwargs

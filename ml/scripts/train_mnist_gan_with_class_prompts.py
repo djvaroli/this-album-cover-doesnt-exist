@@ -28,7 +28,7 @@ from ml.training.contexts import (
     DiscriminatorNamespace,
 )
 from ml.utilities import image_utils
-from ml.training.data import get_mnist_dataset
+from ml.training.data import get_mnist_dataset_with_labels
 
 
 EXPERIMENT_NAME = "GAN MNIST"
@@ -100,7 +100,7 @@ def train_gan(context: MNISTGANContext):
     if processing_op is None:
         raise Exception("Specified invalid image pre-processing operation.")
 
-    data = get_mnist_dataset(batch_size=context.batch_size, preprocess_fn=processing_op)
+    data = get_mnist_dataset_with_labels(batch_size=context.batch_size, preprocess_fn=processing_op)
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
@@ -113,9 +113,9 @@ def train_gan(context: MNISTGANContext):
 
     for epoch in range(1, context.epochs + 1):
         step_loss = {}
-        for image_batch in tqdm(data):
+        for image_batch, image_labels in tqdm(data):
             generator_input_noise = context.generate_noise()
-            context.assign_inputs(generator_input_noise, image_batch)
+            context.assign_inputs([generator_input_noise, image_labels], image_batch)
             step_loss = train_step(context)
 
         model_prediction = context.generator_namespace.model(reference, training=False)
