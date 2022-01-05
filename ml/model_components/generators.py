@@ -4,8 +4,11 @@ Implements different generator classes
 
 
 import typing
+import yaml
 
 import numpy as np
+from tensorflow.keras import layers
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
     Conv2DTranspose,
     BatchNormalization,
@@ -16,6 +19,33 @@ from tensorflow.keras.layers import (
 )
 
 from ml.model_components.common import TFModelExtension
+
+
+def _load_layer_config(filepath: str) -> dict:
+    with open(filepath, "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    return config
+
+
+def _get_layers_from_config(configuration: dict):
+    model_layers = []
+    layer_configuration = configuration.copy()["layers"]
+    for layer_config_ in layer_configuration:
+        type_ = layer_config_.pop("type")
+        layer = getattr(layers, type_)(**layer_config_)
+        model_layers.append(layer)
+    return model_layers
+
+
+def _make_model_from_layers(input_layer: layers.Input, deep_layers: typing.List[layers.Layer]):
+    o = input_layer
+    for layer in deep_layers:
+        o = layer(o)
+    return Model(input_layer, o)
+
+
+config = _load_layer_config(str(p))
+model_layers = _get_layers_from_config(config)
 
 
 class UpSamplingBlock(TFModelExtension):
