@@ -1,0 +1,13 @@
+---
+layers:
+  -
+    type: Dense
+    name: dense-layer-1
+    units: 1024
+    activation: relu
+  -
+    type: Dense
+    name: dense-layer-2
+    units: 512
+    activation: sigmoid
+
