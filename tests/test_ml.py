@@ -12,9 +12,9 @@ logger = logging.getLogger("ML Tests.")
 logger.setLevel(logging.DEBUG)
 
 
-def test_rgb_image_generator_call():
+def test_image_generator_call():
     """
-    Tests that the generators.RGBImageGenerator can be successfully initialized and called
+    Tests that the generators.ImageGenerator can be successfully initialized and called
     Returns:
 
     """
@@ -22,7 +22,7 @@ def test_rgb_image_generator_call():
     noise_dimension = 100
     output_image_size = 256
 
-    generator = generators.RGBImageGenerator()
+    generator = generators.ImageGenerator(n_channels=3)
     sample_input = np.random.random((batch_size, noise_dimension))
 
     generated_images = generator(sample_input)
@@ -34,7 +34,7 @@ def test_rgb_image_generator_call():
     )
 
 
-def test_rgb_image_generator_output_sizes():
+def test_image_generator_output_sizes():
     """
     Tests that the generator outputs images of expected sizes
     Returns:
@@ -47,9 +47,27 @@ def test_rgb_image_generator_output_sizes():
     sample_input = np.random.random((batch_size, noise_dimension))
 
     for image_size in output_image_sizes:
-        generator = generators.RGBImageGenerator(output_image_size=image_size)
+        generator = generators.ImageGenerator(output_image_size=image_size)
         generated_images = generator(sample_input)
         assert generated_images.shape == (batch_size, image_size, image_size, 3)
+
+
+def test_conditional_image_generator_call():
+    batch_size = 10
+    noise_dimension = 100
+    output_image_size = 256
+
+    generator = generators.ConditionalImageGenerator(n_channels=3)
+    sample_input_noise = np.random.random((batch_size, noise_dimension))
+    sample_input_prompt = np.random.random((batch_size, 10))
+
+    generated_images = generator([sample_input_noise, sample_input_prompt])
+    assert generated_images.shape == (
+        batch_size,
+        output_image_size,
+        output_image_size,
+        3,
+    )
 
 
 def test_mnist_gan_with_prompts_train_step():
@@ -66,7 +84,7 @@ def test_mnist_gan_with_prompts_train_step():
     discriminator_noise = False
 
     generator_namespace = contexts.GeneratorNamespace(
-        model=generators.RGBImageGeneratorWithTextPrompt(
+        model=generators.ConditionalImageGenerator(
             initial_filters=128,
             output_image_size=28,
             reshape_into=(7, 7, 256),
@@ -97,12 +115,13 @@ def test_mnist_gan_with_prompts_train_step():
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
     assert len(reference) == 2, "Reference must contain two elements."
+
     processing_op = PROCESSING_OPS.get(context.pre_processing)
     dataset = data.get_mnist_dataset_with_labels(batch_size=context.batch_size, preprocess_fn=processing_op)
 
     generator_input_noise = context.generate_noise()
     true_images, labels = next(dataset.as_numpy_iterator())
-    context.assign_inputs([generator_input_noise, true_images)
+    context.assign_inputs([generator_input_noise, labels], true_images)
     step_loss = train_step(context)
 
 
@@ -148,25 +167,3 @@ def test_mnist_gan_train_step():
     generator_input_noise = context.generate_noise()
     context.assign_inputs(generator_input_noise, syntehtic_images)
     step_loss = train_step(context)
-
-
-def test_make_image_grid():
-    n_slices = 10
-    image_size = 28
-    n_channels = 1
-    scaling_factors = tf.reshape(
-        tf.cast(tf.linspace(0, 1, n_slices), "float32"), (n_slices, 1, 1, n_channels)
-    )
-    test_images = tf.tile(scaling_factors, (1, image_size, image_size, n_channels))
-
-    assert test_images.shape == (
-        n_slices,
-        image_size,
-        image_size,
-        n_channels,
-    ), "Image dimensions mismatch."
-
-    unstacked_images = tf.unstack(test_images)
-    grid_images = tf.concat(unstacked_images, axis=1)
-
-    assert grid_images.shape == (image_size, image_size * n_slices, n_channels)
