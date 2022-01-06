@@ -1,5 +1,3 @@
-import logging
-from abc import ABC
 import typing
 import datetime
 from datetime import datetime as dt
@@ -105,8 +103,8 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
 
     def assign_inputs(
         self,
-        generator_inputs: typing.Union[np.ndarray, tf.Tensor, typing.List[np.ndarray], typing.List[tf.Tensor]],
-        discriminator_inputs: typing.Union[np.ndarray, tf.Tensor],
+        generator_inputs,
+        discriminator_inputs,
     ):
         """
         Sets the next batch of inputs for the generator and discriminator
@@ -198,9 +196,6 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
 
 class MNISTGANContext(BaseGANTrainingContext):
     """[summary]
-
-    Args:
-        BaseModelTrainingContext ([type]): [description]
     """
 
     model_name = "mnist-gan"
@@ -285,3 +280,12 @@ class ConditionalMNISTGANContext(BaseGANTrainingContext):
             )
 
         return self.reference
+
+    def generate_noise_labels(self) -> tf.Tensor:
+        """Generates a tensor of arbitrary, one-hot encoded labels
+        to be fed to the generator in conjunction with the noise
+
+        Returns:
+
+        """
+        return tf.one_hot(tf.random.uniform(shape=(self.batch_size,), minval=0, maxval=10, dtype=tf.int32), depth=10)
