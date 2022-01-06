@@ -29,7 +29,7 @@ from ml.training.contexts import (
 )
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset_with_labels
-from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION
+from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION, OPTIMIZERS
 
 
 def train_step(
@@ -158,6 +158,12 @@ if __name__ == "__main__":
         help="Kind of pre-processing to apply to image [normalize, unit_range]",
         type=str,
     )
+    parser.add_argument(
+        "--optimizer",
+        default="rmsprop",
+        help="Kind of optimizer to use for gradient descent.",
+        type=str
+    )
 
     args = parser.parse_args()
     wandb.init(
@@ -175,7 +181,7 @@ if __name__ == "__main__":
             reshape_into=(7, 7, 256),
             embedding_dimension=7 * 7 * 256,
         ),
-        optimizer=tf.keras.optimizers.Adam(1e-4),
+        optimizer=OPTIMIZERS[wandb.config.optimizer](),
         loss_fn=generator_loss,
     )
 
@@ -189,7 +195,7 @@ if __name__ == "__main__":
             add_input_noise=wandb.config.discriminator_noise,
             output_dense_activation=PREPROCESSING_OP_ACTIVATION.get(wandb.config.pre_processing)
         ),
-        optimizer=tf.keras.optimizers.Adam(1e-4),
+        optimizer=OPTIMIZERS[wandb.config.optimizer](),
         loss_fn=d_loss,
     )
 
