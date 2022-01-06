@@ -111,7 +111,14 @@ def train_gan(context: ConditionalMNISTGANContext):
         step_loss = {}
         for image_batch, image_labels in tqdm(data):
             generator_input_noise = context.generate_noise()
-            context.assign_inputs([generator_input_noise, image_labels], image_batch)
+            generator_fake_labels = context.generate_noise_labels()
+
+            # convert integer labels to floats
+            image_labels = tf.cast(image_labels, tf.float32)
+            context.assign_inputs(
+                [generator_input_noise, generator_fake_labels],
+                [image_batch, image_labels]
+            )
             step_loss = train_step(context)
 
         model_prediction = context.generator_namespace.model(reference, training=False)
