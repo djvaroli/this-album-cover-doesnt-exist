@@ -7,7 +7,7 @@ from ml.model_components import generators, discriminators
 from ml.training import contexts, losses, data
 from ml.scripts import common as scripts_common
 from ml.scripts import train_mnist_gan
-from ml.scripts import train_mnist_gan_with_class_prompts
+from ml.scripts import train_conditional_mnist_gan
 
 
 logger = logging.getLogger("ML Tests.")
@@ -185,4 +185,4 @@ def test_conditional_mnist_gan_train_step():
     true_images, true_labels = next(dataset.as_numpy_iterator())
 
     context.assign_inputs([generator_input_noise, noise_labels], [true_images, true_labels])
-    step_loss = train_mnist_gan_with_class_prompts.train_step(context)
+    step_loss = train_conditional_mnist_gan.train_step(context)
