@@ -4,8 +4,9 @@ import tensorflow as tf
 import numpy as np
 
 from ml.model_components import generators, discriminators
+from ml.training import contexts, losses, data
 from ml.scripts.train_mnist_gan import train_step, get_train_context
-
+from ml.scripts.train_mnist_gan_with_class_prompts import train_step, PROCESSING_OPS
 
 logger = logging.getLogger("ML Tests.")
 logger.setLevel(logging.DEBUG)
@@ -49,6 +50,60 @@ def test_rgb_image_generator_output_sizes():
         generator = generators.RGBImageGenerator(output_image_size=image_size)
         generated_images = generator(sample_input)
         assert generated_images.shape == (batch_size, image_size, image_size, 3)
+
+
+def test_mnist_gan_with_prompts_train_step():
+    """Tests the train step for MNIST GAN with class label prompts
+
+    Returns:
+
+    """
+    batch_size = 10
+    noise_dimension = 100
+    epochs = 1
+    label_smoothing = False
+    pre_processing = "unit_range"
+    discriminator_noise = False
+
+    generator_namespace = contexts.GeneratorNamespace(
+        model=generators.RGBImageGeneratorWithTextPrompt(
+            initial_filters=128,
+            output_image_size=28,
+            reshape_into=(7, 7, 256),
+            embedding_dimension=7 * 7 * 256,
+        ),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=losses.generator_loss,
+    )
+
+    # set up the discriminator
+    discriminator_namespace = contexts.DiscriminatorNamespace(
+        model=discriminators.ImageDiscriminator(),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
+        loss_fn=losses.discriminator_loss,
+    )
+
+    context = contexts.MnistPromptGANContext(
+        batch_size=batch_size,
+        noise_dimension=noise_dimension,
+        epochs=epochs,
+        label_smoothing=label_smoothing,
+        pre_processing=pre_processing,
+        discriminator_noise=discriminator_noise,
+        generator_namespace=generator_namespace,
+        discriminator_namespace=discriminator_namespace,
+    )
+
+    # this will have 10 samples, instead of the number of batches
+    reference = context.set_reference()
+    assert len(reference) == 2, "Reference must contain two elements."
+    processing_op = PROCESSING_OPS.get(context.pre_processing)
+    dataset = data.get_mnist_dataset_with_labels(batch_size=context.batch_size, preprocess_fn=processing_op)
+
+    generator_input_noise = context.generate_noise()
+    true_images, labels = next(dataset.as_numpy_iterator())
+    context.assign_inputs([generator_input_noise, true_images)
+    step_loss = train_step(context)
 
 
 def test_discriminator():

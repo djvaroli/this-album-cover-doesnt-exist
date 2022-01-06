@@ -38,7 +38,9 @@ PROCESSING_OPS = {
 }
 
 
-def train_step(context: MnistPromptGANContext) -> dict:
+def train_step(
+        context: MnistPromptGANContext
+) -> dict:
     """
 
     Args:

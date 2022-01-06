@@ -12,7 +12,7 @@ from tensorflow.keras.layers import (
     LeakyReLU,
     Dense,
     Reshape,
-    Add,
+    Concatenate
 )
 
 from ml.model_components.common import TFModelExtension
@@ -183,45 +183,10 @@ class ImageGenerator(TFModelExtension):
         return config
 
 
-class RGBImageGenerator(ImageGenerator):
-    """
-    Vanilla generator to be used in a GAN
-    """
-
-    def __init__(
-        self,
-        embedding_dimension: int = 8 * 8 * 32,
-        reshape_into: typing.Tuple = (8, 8, 32),
-        output_image_size: int = 256,
-        initial_filters: int = 512,
-        name: str = "rgb_image_generator",
-        output_activation: str = "sigmoid",
-    ):
-        """
-        Assumes that the generated images are squares.
-        :param embedding_dimension:
-        :param reshape_into:
-        :param output_image_size: The dimensions of the generated images (assumes images are square)
-        :param initial_filters: the number of filters in the first UpSampling block
-        :param name:
-        :param output_activation:
-        """
-        super(RGBImageGenerator, self).__init__(
-            embedding_dimension=embedding_dimension,
-            reshape_into=reshape_into,
-            output_image_size=output_image_size,
-            initial_filters=initial_filters,
-            name=name,
-            n_channels=3,
-            output_activation=output_activation,
-        )
-
-
-class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
-    """
-    Implements a vanilla GAN RGB image generator with the addition of accepting two separate tensors as inputs.
-    The first tensor is the "noise" and the second tensor is an embedding of a text prompt.
-    The model will first pass both through a separate dense layer and then combine by addition.
+class ConditionalImageGenerator(ImageGenerator):
+    """Implements an image generator class that is able to take as inputs a tensor of noise
+    and a second tensor representing some condition to be used when generating the output image.
+    Follows the procedure described in https://arxiv.org/pdf/1605.05396.pdf
     """
 
     def __init__(
@@ -230,7 +195,8 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         reshape_into: typing.Tuple = (8, 8, 32),
         output_image_size: int = 256,
         initial_filters: int = 512,
-        name: str = "rgb_image_generator_w_text_prompt",
+        n_channels: int = 1,
+        name: str = "conditional_image_generator",
         output_activation: str = "sigmoid",
     ):
         """
@@ -240,17 +206,17 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         :param name:
         :param output_activation:
         """
-        super(RGBImageGeneratorWithTextPrompt, self).__init__(
+        super(ConditionalImageGenerator, self).__init__(
             name=name,
             embedding_dimension=embedding_dimension,
             reshape_into=reshape_into,
             output_image_size=output_image_size,
             initial_filters=initial_filters,
             output_activation=output_activation,
+            n_channels=n_channels
         )
 
         self.noise_dense = Dense(embedding_dimension, activation="relu")
-        self.text_prompt_dense = Dense(embedding_dimension, activation="relu")
 
     def call(self, inputs, *args, **kwargs):
         """
@@ -260,11 +226,9 @@ class RGBImageGeneratorWithTextPrompt(RGBImageGenerator):
         :param kwargs:
         :return:
         """
-        noise_input, prompt_input = inputs
-        noise_input = self.noise_dense(noise_input)
-        prompt_input = self.text_prompt_dense(prompt_input)
-        outputs = Add([noise_input, prompt_input])
+        noise_input, conditioning_prompt = inputs
+        concatenated = Concatenate([noise_input, conditioning_prompt])
 
-        return super(RGBImageGeneratorWithTextPrompt, self).call(
-            outputs, *args, **kwargs
+        return super(ConditionalImageGenerator, self).call(
+            concatenated, *args, **kwargs
         )
