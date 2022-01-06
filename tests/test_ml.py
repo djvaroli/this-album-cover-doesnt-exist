@@ -72,6 +72,18 @@ def test_conditional_image_generator_call():
     )
 
 
+def test_conditional_image_discriminator_call():
+    batch_size = 1
+    image_dimension = 28
+    n_channels = 3
+    input_image = tf.random.normal(shape=(batch_size, image_dimension, image_dimension, n_channels))
+    input_labels = tf.random.normal(shape=(batch_size, 100))
+
+    discriminator = discriminators.ConditionalImageDiscriminator()
+
+    discriminator([input_image, input_labels])
+
+
 def test_mnist_gan_with_prompts_train_step():
     """Tests the train step for MNIST GAN with class label prompts
 

@@ -33,7 +33,7 @@ from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION
 
 
 def train_step(
-        context: MnistPromptGANContext
+        context: ConditionalMNISTGANContext
 ) -> dict:
     """
 
@@ -88,7 +88,7 @@ def train_step(
     return step_loss
 
 
-def train_gan(context: MnistPromptGANContext):
+def train_gan(context: ConditionalMNISTGANContext):
     """ """
 
     processing_op = PROCESSING_OPS.get(context.pre_processing)
