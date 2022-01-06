@@ -229,14 +229,11 @@ class MNISTGANContext(BaseGANTrainingContext):
         self.pre_processing = pre_processing
 
 
-class MnistPromptGANContext(BaseGANTrainingContext):
+class ConditionalMNISTGANContext(BaseGANTrainingContext):
     """[summary]
-
-    Args:
-        MnistPromptGANContext ([type]): [description]
     """
 
-    model_name = "mnist-gan-with-prompts"
+    model_name = "conditional-mnist-gan-context"
 
     def __init__(
         self,
@@ -249,7 +246,7 @@ class MnistPromptGANContext(BaseGANTrainingContext):
         discriminator_noise: bool = False,
         pre_processing: str = "unit_range",
     ):
-        super(MnistPromptGANContext, self).__init__(
+        super(ConditionalMNISTGANContext, self).__init__(
             self.model_name,
             batch_size,
             noise_dimension,

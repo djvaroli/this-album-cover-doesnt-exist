@@ -23,15 +23,13 @@ from ml.training.losses import (
     discriminator_loss,
 )
 from ml.training.contexts import (
-    MnistPromptGANContext,
+    ConditionalMNISTGANContext,
     GeneratorNamespace,
     DiscriminatorNamespace,
 )
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset_with_labels
 from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION
-
-EXPERIMENT_NAME = "GAN MNIST"
 
 
 def train_step(
@@ -195,7 +193,7 @@ if __name__ == "__main__":
         loss_fn=d_loss,
     )
 
-    context = MnistPromptGANContext(
+    context = ConditionalMNISTGANContext(
         batch_size=wandb.config.batch_size,
         noise_dimension=wandb.config.noise_dimension,
         epochs=wandb.config.epochs,

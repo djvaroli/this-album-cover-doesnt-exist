@@ -103,7 +103,7 @@ def test_mnist_gan_with_prompts_train_step():
         loss_fn=losses.discriminator_loss,
     )
 
-    context = contexts.MnistPromptGANContext(
+    context = contexts.ConditionalMNISTGANContext(
         batch_size=batch_size,
         noise_dimension=noise_dimension,
         epochs=epochs,
