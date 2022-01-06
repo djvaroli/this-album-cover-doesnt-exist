@@ -5,7 +5,7 @@ Implements different discriminator classes
 import typing
 
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Dropout, Flatten
+from tensorflow.keras.layers import Dense, Conv2D, LeakyReLU, Dropout, Flatten, Concatenate
 
 from ml.model_components.common import TFModelExtension
 
@@ -119,3 +119,39 @@ class ImageDiscriminator(TFModelExtension):
         config: dict = super(ImageDiscriminator, self).get_config()
         config.update({"output_dense_activation": self.output_dense_activation})
         return config
+
+
+class ConditionalImageDiscriminator(ImageDiscriminator):
+    """Implements an image discriminator that takes as input a Tensor corresponding to
+    either a generated or true image
+
+    """
+
+    def __init__(
+        self,
+        output_dense_activation: str = None,
+        name: str = "conditional_image_discriminator",
+        add_input_noise: bool = False,
+    ):
+        super(ImageDiscriminator, self).__init__(name=name)
+        self.output_dense_activation = output_dense_activation
+        self.add_input_noise = add_input_noise
+        self.down_sampling_blocks = [
+            DownSamplingBlock(64, strides=(2, 2)),
+            DownSamplingBlock(128, strides=(2, 2)),
+            DownSamplingBlock(256, strides=(2, 2)),
+        ]
+        self.output_dense = Dense(1, activation=output_dense_activation)
+
+    def call(self, inputs: tf.Tensor, *args, **kwargs):
+        image_output, conditional_prompt = inputs
+
+        if self.add_input_noise:
+            image_output += tf.random.normal(image_output.shape)
+
+        for block in self.down_sampling_blocks:
+            image_output = block(image_output)
+
+        image_output = Flatten()(image_output)
+        concatenated = Concatenate([image_output, conditional_prompt])
+        return self.output_dense(concatenated)

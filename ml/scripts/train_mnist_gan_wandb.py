@@ -29,13 +29,9 @@ from ml.training.contexts import (
 )
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset
-
+from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION
 
 EXPERIMENT_NAME = "GAN MNIST"
-PROCESSING_OPS = {
-    "normalize": lambda x: (x - 255.0) / 255.0,
-    "unit_range": lambda x: (x - 127.5) / 127.5,
-}
 
 
 def train_step(context: MNISTGANContext) -> dict:
@@ -189,7 +185,10 @@ if __name__ == "__main__":
         d_loss = smoothed_discriminator_loss
 
     discriminator_namespace = DiscriminatorNamespace(
-        model=ImageDiscriminator(add_input_noise=wandb.config.discriminator_noise),
+        model=ImageDiscriminator(
+            add_input_noise=wandb.config.discriminator_noise,
+            output_dense_activation=PREPROCESSING_OP_ACTIVATION.get(wandb.config.pre_processing)
+        ),
         optimizer=tf.keras.optimizers.Adam(1e-4),
         loss_fn=d_loss,
     )

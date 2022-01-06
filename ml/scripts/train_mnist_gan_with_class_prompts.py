@@ -15,8 +15,8 @@ import tensorflow as tf
 from tqdm import tqdm
 import wandb
 
-from ml.model_components.generators import RGBImageGeneratorWithTextPrompt
-from ml.model_components.discriminators import ImageDiscriminator
+from ml.model_components.generators import ConditionalImageGenerator
+from ml.model_components.discriminators import ConditionalImageDiscriminator
 from ml.training.losses import (
     smoothed_discriminator_loss,
     generator_loss,
@@ -29,13 +29,9 @@ from ml.training.contexts import (
 )
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset_with_labels
-
+from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION
 
 EXPERIMENT_NAME = "GAN MNIST"
-PROCESSING_OPS = {
-    "normalize": lambda x: (x - 255.0) / 255.0,
-    "unit_range": lambda x: (x - 127.5) / 127.5,
-}
 
 
 def train_step(
@@ -169,13 +165,13 @@ if __name__ == "__main__":
     wandb.init(
         project="this-album-cover-doesnt-exist",
         entity="djvaroli",
-        tags=["baseline", "gan", "mnist"],
+        tags=["baseline", "gan", "mnist", "conditional"],
     )
     wandb.config.update(args)
 
     # set up the generator
     generator_namespace = GeneratorNamespace(
-        model=RGBImageGeneratorWithTextPrompt(
+        model=ConditionalImageGenerator(
             initial_filters=128,
             output_image_size=28,
             reshape_into=(7, 7, 256),
@@ -191,7 +187,10 @@ if __name__ == "__main__":
         d_loss = smoothed_discriminator_loss
 
     discriminator_namespace = DiscriminatorNamespace(
-        model=ImageDiscriminator(add_input_noise=wandb.config.discriminator_noise),
+        model=ConditionalImageDiscriminator(
+            add_input_noise=wandb.config.discriminator_noise,
+            output_dense_activation=PREPROCESSING_OP_ACTIVATION.get(wandb.config.pre_processing)
+        ),
         optimizer=tf.keras.optimizers.Adam(1e-4),
         loss_fn=d_loss,
     )
