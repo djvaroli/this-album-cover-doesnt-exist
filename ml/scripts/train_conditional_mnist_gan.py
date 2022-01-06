@@ -29,7 +29,7 @@ from ml.training.contexts import (
 )
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset_with_labels
-from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION, OPTIMIZERS
+from ml.scripts.common import PROCESSING_OPS, OPTIMIZERS
 
 
 def train_step(
@@ -198,10 +198,7 @@ if __name__ == "__main__":
         d_loss = smoothed_discriminator_loss
 
     discriminator_namespace = DiscriminatorNamespace(
-        model=ConditionalImageDiscriminator(
-            add_input_noise=wandb.config.discriminator_noise,
-            output_dense_activation=PREPROCESSING_OP_ACTIVATION.get(wandb.config.pre_processing)
-        ),
+        model=ConditionalImageDiscriminator(add_input_noise=wandb.config.discriminator_noise),
         optimizer=OPTIMIZERS[wandb.config.optimizer](),
         loss_fn=d_loss,
     )

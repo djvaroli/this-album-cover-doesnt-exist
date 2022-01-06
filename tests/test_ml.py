@@ -63,11 +63,12 @@ def test_image_discriminator():
     """
     batch_size = 10
     image_size = 256
-    output_dense_activation = "sigmoid"
     add_input_noise = True
+    output_dense_activation = "sigmoid"
     sample_input = np.random.random((batch_size, image_size, image_size, 3))
     discriminator = discriminators.ImageDiscriminator(
-        output_dense_activation=output_dense_activation, add_input_noise=add_input_noise
+        output_dense_activation=output_dense_activation,
+        add_input_noise=add_input_noise
     )
 
     sample_output = discriminator(sample_input)
