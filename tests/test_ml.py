@@ -45,19 +45,21 @@ def test_image_generator_output_sizes():
     batch_size = 10
     noise_dimension = 100
     sample_input = np.random.random((batch_size, noise_dimension))
+    n_channels = 3
 
     for image_size in output_image_sizes:
-        generator = generators.ImageGenerator(output_image_size=image_size)
+        generator = generators.ImageGenerator(output_image_size=image_size, n_channels=n_channels)
         generated_images = generator(sample_input)
-        assert generated_images.shape == (batch_size, image_size, image_size, 3)
+        assert generated_images.shape == (batch_size, image_size, image_size, n_channels)
 
 
 def test_conditional_image_generator_call():
     batch_size = 10
     noise_dimension = 100
     output_image_size = 256
+    n_channels = 1
 
-    generator = generators.ConditionalImageGenerator(n_channels=3)
+    generator = generators.ConditionalImageGenerator(n_channels=n_channels)
     sample_input_noise = np.random.random((batch_size, noise_dimension))
     sample_input_prompt = np.random.random((batch_size, 10))
 
@@ -66,7 +68,7 @@ def test_conditional_image_generator_call():
         batch_size,
         output_image_size,
         output_image_size,
-        3,
+        n_channels,
     )
 
 
@@ -114,6 +116,7 @@ def test_mnist_gan_with_prompts_train_step():
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
+
     assert len(reference) == 2, "Reference must contain two elements."
 
     processing_op = PROCESSING_OPS.get(context.pre_processing)

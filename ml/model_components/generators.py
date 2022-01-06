@@ -227,7 +227,7 @@ class ConditionalImageGenerator(ImageGenerator):
         :return:
         """
         noise_input, conditioning_prompt = inputs
-        concatenated = Concatenate([noise_input, conditioning_prompt])
+        concatenated = Concatenate()([noise_input, conditioning_prompt])
 
         return super(ConditionalImageGenerator, self).call(
             concatenated, *args, **kwargs

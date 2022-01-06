@@ -1,3 +1,4 @@
+import logging
 from abc import ABC
 import typing
 import datetime
@@ -259,17 +260,28 @@ class MnistPromptGANContext(BaseGANTrainingContext):
         self.label_smoothing = label_smoothing
         self.discriminator_noise = discriminator_noise
         self.pre_processing = pre_processing
+        self.__reference = None
+
+    @property
+    def reference(self):
+        """
+        Returns a pre-generated tensor of Gaussian-distributed noise to be used as a reference when
+        evaluating the GAN
+        Returns:
+
+        """
+        return self.__reference
 
     def set_reference(
-        self, size: int = 10, mean: float = 0.0, stddev: float = 1.0, **kwargs
+        self, mean: float = 0.0, stddev: float = 1.0, **kwargs
     ) -> typing.Tuple[tf.Tensor, tf.Tensor]:
         if self.reference is None:
             reference_noise = tf.random.normal(
-                (size, self.noise_dimension), mean, stddev, **kwargs
+                (10, self.noise_dimension), mean, stddev, **kwargs
             )
             labels = tf.expand_dims(tf.cast(tf.linspace(0, 9, num=10), tf.int16), axis=0)
-            reference_labels = tf.tile(labels, multiples=[size, 1])
-            self.__reference = [reference_noise, reference_labels]
+            reference_labels = tf.tile(labels, multiples=[10, 1])
+            self.__reference = (reference_noise, reference_labels)
         else:
             raise Exception(
                 "Reference already set, please clear reference using BaseGANTrainingContext.clear_reference first."

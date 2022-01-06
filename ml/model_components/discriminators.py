@@ -153,5 +153,5 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
             image_output = block(image_output)
 
         image_output = Flatten()(image_output)
-        concatenated = Concatenate([image_output, conditional_prompt])
+        concatenated = Concatenate()([image_output, conditional_prompt])
         return self.output_dense(concatenated)
