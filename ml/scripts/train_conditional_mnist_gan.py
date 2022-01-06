@@ -15,24 +15,26 @@ import tensorflow as tf
 from tqdm import tqdm
 import wandb
 
-from ml.model_components.generators import ImageGenerator
-from ml.model_components.discriminators import ImageDiscriminator
+from ml.model_components.generators import ConditionalImageGenerator
+from ml.model_components.discriminators import ConditionalImageDiscriminator
 from ml.training.losses import (
     smoothed_discriminator_loss,
     generator_loss,
     discriminator_loss,
 )
 from ml.training.contexts import (
-    MNISTGANContext,
+    ConditionalMNISTGANContext,
     GeneratorNamespace,
     DiscriminatorNamespace,
 )
 from ml.utilities import image_utils
-from ml.training.data import get_mnist_dataset
+from ml.training.data import get_mnist_dataset_with_labels
 from ml.scripts.common import PROCESSING_OPS, PREPROCESSING_OP_ACTIVATION, OPTIMIZERS
 
 
-def train_step(context: MNISTGANContext) -> dict:
+def train_step(
+        context: ConditionalMNISTGANContext
+) -> dict:
     """
 
     Args:
@@ -44,17 +46,17 @@ def train_step(context: MNISTGANContext) -> dict:
 
     generator_namespace = context.generator_namespace
     discriminator_namespace = context.discriminator_namespace
-    generator_inputs = generator_namespace.model_inputs
-    discriminator_inputs = discriminator_namespace.model_inputs
+    generator_noise, fake_labels = generator_namespace.model_inputs
+    real_images, real_labels = discriminator_namespace.model_inputs
 
     with tf.GradientTape() as generator_tape, tf.GradientTape() as discriminator_tape:
-        generated_images = generator_namespace.model(generator_inputs, training=True)
+        generated_images = generator_namespace.model([generator_noise, fake_labels], training=True)
 
         real_images_predictions = discriminator_namespace.model(
-            discriminator_inputs, training=True
+            [real_images, real_labels], training=True
         )
         generated_images_predictions = discriminator_namespace.model(
-            generated_images, training=True
+            [generated_images, fake_labels], training=True
         )
 
         generator_step_loss = generator_namespace.loss_fn(generated_images_predictions)
@@ -86,7 +88,7 @@ def train_step(context: MNISTGANContext) -> dict:
     return step_loss
 
 
-def train_gan(context: MNISTGANContext):
+def train_gan(context: ConditionalMNISTGANContext):
     """ """
 
     processing_op = PROCESSING_OPS.get(context.pre_processing)
@@ -94,7 +96,7 @@ def train_gan(context: MNISTGANContext):
     if processing_op is None:
         raise Exception("Specified invalid image pre-processing operation.")
 
-    data = get_mnist_dataset(batch_size=context.batch_size, preprocess_fn=processing_op)
+    data = get_mnist_dataset_with_labels(batch_size=context.batch_size, preprocess_fn=processing_op)
 
     # this will have 10 samples, instead of the number of batches
     reference = context.set_reference()
@@ -107,9 +109,9 @@ def train_gan(context: MNISTGANContext):
 
     for epoch in range(1, context.epochs + 1):
         step_loss = {}
-        for image_batch in tqdm(data):
+        for image_batch, image_labels in tqdm(data):
             generator_input_noise = context.generate_noise()
-            context.assign_inputs(generator_input_noise, image_batch)
+            context.assign_inputs([generator_input_noise, image_labels], image_batch)
             step_loss = train_step(context)
 
         model_prediction = context.generator_namespace.model(reference, training=False)
@@ -167,13 +169,13 @@ if __name__ == "__main__":
     wandb.init(
         project="this-album-cover-doesnt-exist",
         entity="djvaroli",
-        tags=["baseline", "gan", "mnist"],
+        tags=["baseline", "gan", "mnist", "conditional"],
     )
     wandb.config.update(args)
 
     # set up the generator
     generator_namespace = GeneratorNamespace(
-        model=ImageGenerator(
+        model=ConditionalImageGenerator(
             initial_filters=128,
             output_image_size=28,
             reshape_into=(7, 7, 256),
@@ -189,7 +191,7 @@ if __name__ == "__main__":
         d_loss = smoothed_discriminator_loss
 
     discriminator_namespace = DiscriminatorNamespace(
-        model=ImageDiscriminator(
+        model=ConditionalImageDiscriminator(
             add_input_noise=wandb.config.discriminator_noise,
             output_dense_activation=PREPROCESSING_OP_ACTIVATION.get(wandb.config.pre_processing)
         ),
@@ -197,7 +199,7 @@ if __name__ == "__main__":
         loss_fn=d_loss,
     )
 
-    context = MNISTGANContext(
+    context = ConditionalMNISTGANContext(
         batch_size=wandb.config.batch_size,
         noise_dimension=wandb.config.noise_dimension,
         epochs=wandb.config.epochs,

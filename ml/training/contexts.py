@@ -1,4 +1,3 @@
-from abc import ABC
 import typing
 import datetime
 from datetime import datetime as dt
@@ -104,8 +103,8 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
 
     def assign_inputs(
         self,
-        generator_inputs: typing.Union[np.ndarray, tf.Tensor],
-        discriminator_inputs: typing.Union[np.ndarray, tf.Tensor],
+        generator_inputs,
+        discriminator_inputs,
     ):
         """
         Sets the next batch of inputs for the generator and discriminator
@@ -134,7 +133,7 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
         )
 
     @property
-    def reference(self) -> tf.Tensor:
+    def reference(self):
         """
         Returns a pre-generated tensor of Gaussian-distributed noise to be used as a reference when
         evaluating the GAN
@@ -197,9 +196,6 @@ class BaseGANTrainingContext(BaseModelTrainingContext):
 
 class MNISTGANContext(BaseGANTrainingContext):
     """[summary]
-
-    Args:
-        BaseModelTrainingContext ([type]): [description]
     """
 
     model_name = "mnist-gan"
@@ -226,3 +222,70 @@ class MNISTGANContext(BaseGANTrainingContext):
         self.label_smoothing = label_smoothing
         self.discriminator_noise = discriminator_noise
         self.pre_processing = pre_processing
+
+
+class ConditionalMNISTGANContext(BaseGANTrainingContext):
+    """[summary]
+    """
+
+    model_name = "conditional-mnist-gan-context"
+
+    def __init__(
+        self,
+        batch_size: int,
+        noise_dimension: int,
+        epochs: int,
+        generator_namespace: GeneratorNamespace,
+        discriminator_namespace: DiscriminatorNamespace,
+        label_smoothing: bool = False,
+        discriminator_noise: bool = False,
+        pre_processing: str = "unit_range",
+    ):
+        super(ConditionalMNISTGANContext, self).__init__(
+            self.model_name,
+            batch_size,
+            noise_dimension,
+            epochs,
+            generator_namespace,
+            discriminator_namespace,
+        )
+        self.label_smoothing = label_smoothing
+        self.discriminator_noise = discriminator_noise
+        self.pre_processing = pre_processing
+        self.__reference = None
+
+    @property
+    def reference(self):
+        """
+        Returns a pre-generated tensor of Gaussian-distributed noise to be used as a reference when
+        evaluating the GAN
+        Returns:
+
+        """
+        return self.__reference
+
+    def set_reference(
+        self, mean: float = 0.0, stddev: float = 1.0, **kwargs
+    ) -> typing.Tuple[tf.Tensor, tf.Tensor]:
+        if self.reference is None:
+            reference_noise = tf.random.normal(
+                (10, self.noise_dimension), mean, stddev, **kwargs
+            )
+            labels = tf.expand_dims(tf.cast(tf.linspace(0, 9, num=10), tf.int16), axis=0)
+            reference_labels = tf.tile(labels, multiples=[10, 1])
+            self.__reference = (reference_noise, reference_labels)
+        else:
+            raise Exception(
+                "Reference already set, please clear reference using BaseGANTrainingContext.clear_reference first."
+            )
+
+        return self.reference
+
+    def generate_noise_labels(self) -> tf.Tensor:
+        """Generates a tensor of arbitrary, one-hot encoded labels
+        to be fed to the generator in conjunction with the noise
+
+        Returns:
+
+        """
+        return tf.one_hot(tf.random.uniform(shape=(self.batch_size,), minval=0, maxval=10, dtype=tf.int32), depth=10)
