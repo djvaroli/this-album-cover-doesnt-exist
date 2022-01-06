@@ -46,17 +46,17 @@ def train_step(
 
     generator_namespace = context.generator_namespace
     discriminator_namespace = context.discriminator_namespace
-    generator_inputs = generator_namespace.model_inputs
-    discriminator_inputs = discriminator_namespace.model_inputs
+    generator_noise, fake_labels = generator_namespace.model_inputs
+    real_images, real_labels = discriminator_namespace.model_inputs
 
     with tf.GradientTape() as generator_tape, tf.GradientTape() as discriminator_tape:
-        generated_images = generator_namespace.model(generator_inputs, training=True)
+        generated_images = generator_namespace.model([generator_noise, fake_labels], training=True)
 
         real_images_predictions = discriminator_namespace.model(
-            discriminator_inputs, training=True
+            [real_images, real_labels], training=True
         )
         generated_images_predictions = discriminator_namespace.model(
-            generated_images, training=True
+            [generated_images, fake_labels], training=True
         )
 
         generator_step_loss = generator_namespace.loss_fn(generated_images_predictions)
