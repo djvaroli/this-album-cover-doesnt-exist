@@ -12,7 +12,7 @@ logger = logging.getLogger("ML Tests.")
 logger.setLevel(logging.DEBUG)
 
 
-def test_image_generator_call():
+def test_image_generator():
     """
     Tests that the generators.ImageGenerator can be successfully initialized and called
     Returns:
@@ -53,7 +53,36 @@ def test_image_generator_output_sizes():
         assert generated_images.shape == (batch_size, image_size, image_size, n_channels)
 
 
-def test_conditional_image_generator_call():
+def test_image_discriminator():
+    """
+    Tests that a discriminator can be succesfully initialized and called on a sample input
+    Returns:
+
+    """
+    batch_size = 10
+    image_size = 256
+    output_dense_activation = "sigmoid"
+    add_input_noise = True
+    sample_input = np.random.random((batch_size, image_size, image_size, 3))
+    discriminator = discriminators.ImageDiscriminator(
+        output_dense_activation=output_dense_activation, add_input_noise=add_input_noise
+    )
+
+    sample_output = discriminator(sample_input)
+
+    assert sample_output.shape == (
+        batch_size,
+        1,
+    ), f"Output size isn't as expected {sample_output.shape}"
+    assert (
+        np.max(sample_output.numpy().ravel()) <= 1.0
+    ), f"Max value in output array exceeds 1.0"
+    assert (
+        np.min(sample_output.numpy().ravel()) >= 0.0
+    ), "Min value in output array is below 0.0"
+
+
+def test_conditional_image_generator():
     batch_size = 10
     noise_dimension = 100
     output_image_size = 256
@@ -72,7 +101,7 @@ def test_conditional_image_generator_call():
     )
 
 
-def test_conditional_image_discriminator_call():
+def test_conditional_image_discriminator():
     batch_size = 1
     image_dimension = 28
     n_channels = 3
@@ -84,7 +113,7 @@ def test_conditional_image_discriminator_call():
     discriminator([input_image, input_labels])
 
 
-def test_mnist_gan_with_prompts_train_step():
+def test_conditional_mnist_gan_train_step():
     """Tests the train step for MNIST GAN with class label prompts
 
     Returns:
@@ -138,35 +167,6 @@ def test_mnist_gan_with_prompts_train_step():
     true_images, labels = next(dataset.as_numpy_iterator())
     context.assign_inputs([generator_input_noise, labels], true_images)
     step_loss = train_step(context)
-
-
-def test_discriminator():
-    """
-    Tests that a discriminator can be succesfully initialized and called on a sample input
-    Returns:
-
-    """
-    batch_size = 10
-    image_size = 256
-    output_dense_activation = "sigmoid"
-    add_input_noise = True
-    sample_input = np.random.random((batch_size, image_size, image_size, 3))
-    discriminator = discriminators.ImageDiscriminator(
-        output_dense_activation=output_dense_activation, add_input_noise=add_input_noise
-    )
-
-    sample_output = discriminator(sample_input)
-
-    assert sample_output.shape == (
-        batch_size,
-        1,
-    ), f"Output size isn't as expected {sample_output.shape}"
-    assert (
-        np.max(sample_output.numpy().ravel()) <= 1.0
-    ), f"Max value in output array exceeds 1.0"
-    assert (
-        np.min(sample_output.numpy().ravel()) >= 0.0
-    ), "Min value in output array is below 0.0"
 
 
 def test_mnist_gan_train_step():
