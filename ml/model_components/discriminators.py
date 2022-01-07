@@ -152,6 +152,7 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
         self.prompt_dense = Dense(prompt_embedding_dim, activation="relu")
 
         self.unit_convolution = DownSamplingBlock(256, strides=(1, 1), kernel_size=(1, 1))
+        self.output_convolution = DownSamplingBlock(256)
         self.output_dense = Dense(1, activation=output_dense_activation)
 
     def call(self, inputs: tf.Tensor, *args, **kwargs):
@@ -169,6 +170,6 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
         repeated_prompt = tf.repeat(tf.repeat(prompt, repeats=4, axis=1), repeats=4, axis=2)
 
         outputs = Concatenate(axis=-1)([outputs, repeated_prompt])
-        outputs = self.unit_convolution(outputs)
+        outputs = self.output_convolution(self.unit_convolution(outputs))
         outputs = Flatten()(outputs)
         return self.output_dense(outputs)
