@@ -106,10 +106,6 @@ def train_gan(context: ConditionalMNISTGANContext):
     )
     reference_images = image_utils.array_to_image(reference_images)
 
-    # plot the models
-    context.generator_namespace.model.plot()
-    context.discriminator_namespace.model.plot()
-
     wandb.log({"reference_image": wandb.Image(reference_images)}, step=0)
 
     for epoch in range(1, context.epochs + 1):
