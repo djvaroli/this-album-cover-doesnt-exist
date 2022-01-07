@@ -9,7 +9,7 @@ import numpy as np
 from tensorflow.keras.layers import (
     Conv2DTranspose,
     BatchNormalization,
-    ReLU,
+    LeakyReLU,
     Dense,
     Reshape,
     Concatenate
@@ -30,7 +30,7 @@ class UpSamplingBlock(TFModelExtension):
         strides: typing.Tuple = (1, 1),
         padding: str = "same",
         use_bias: bool = False,
-        activation: str = None
+        activation: str = None,
     ):
         super(UpSamplingBlock, self).__init__()
         self.n_channels = n_filters
@@ -50,7 +50,7 @@ class UpSamplingBlock(TFModelExtension):
                 activation=activation,
             ),
             BatchNormalization(),
-            ReLU(),
+            LeakyReLU(),
         ]
 
     def get_config(self):
