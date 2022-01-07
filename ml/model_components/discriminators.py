@@ -82,7 +82,7 @@ class ImageDiscriminator(TFModelExtension):
     def __init__(
         self,
         output_dense_activation: str = None,
-        name: str = "rgb_image_discriminator",
+        name: str = "image_discriminator",
         add_input_noise: bool = False,
     ):
         super(ImageDiscriminator, self).__init__(name=name)
