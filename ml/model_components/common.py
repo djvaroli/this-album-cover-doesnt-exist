@@ -73,7 +73,7 @@ class TFModelExtension(Model, _TFReprClass):
             for input_shape_ in input_layers_shapes:
                 inputs.append(Input(input_shape_))
 
-            self.__model = Model(inputs, self.call(inputs))
+            self.__model = Model(inputs, self.call(inputs, training=False))
 
         return self.__model
 

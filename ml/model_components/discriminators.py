@@ -105,6 +105,10 @@ class ImageDiscriminator(TFModelExtension):
         else:
             outputs = inputs
 
+        is_training = kwargs.get("training", True)
+        if self.add_input_noise and is_training:
+            outputs += tf.random.normal(outputs.shape)
+
         if self.add_input_noise:
             outputs += tf.random.normal(outputs.shape)
 
@@ -161,7 +165,8 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
         input_image, prompt = inputs
 
         outputs = input_image
-        if self.add_input_noise:
+        is_training = kwargs.get("training", True)
+        if self.add_input_noise and is_training:
             outputs += tf.random.normal(outputs.shape)
 
         for block in self.down_sampling_blocks:
