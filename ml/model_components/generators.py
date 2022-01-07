@@ -10,6 +10,7 @@ from tensorflow.keras.layers import (
     Conv2DTranspose,
     BatchNormalization,
     LeakyReLU,
+    ReLU,
     Dense,
     Reshape,
     Concatenate
@@ -31,6 +32,7 @@ class UpSamplingBlock(TFModelExtension):
         padding: str = "same",
         use_bias: bool = False,
         activation: str = None,
+        use_relu: bool = False
     ):
         super(UpSamplingBlock, self).__init__()
         self.n_channels = n_filters
@@ -40,6 +42,7 @@ class UpSamplingBlock(TFModelExtension):
         self.use_bias = use_bias
         self.activation = activation
 
+        final_activation = ReLU if use_relu else LeakyReLU
         self.layers_ = [
             Conv2DTranspose(
                 n_filters,
@@ -50,7 +53,7 @@ class UpSamplingBlock(TFModelExtension):
                 activation=activation,
             ),
             BatchNormalization(),
-            LeakyReLU(),
+            final_activation(),
         ]
 
     def get_config(self):
@@ -95,6 +98,7 @@ class ImageGenerator(TFModelExtension):
         output_image_size: int = 256,
         initial_filters: int = 512,
         n_channels: int = 1,
+        kernel_size: tuple = (4, 4),
         name: str = "image_generator",
         initial_dense_activation: str = None,
         output_activation: str = "tanh",
@@ -109,7 +113,9 @@ class ImageGenerator(TFModelExtension):
         :param name:
         :param initial_dense_activation:
         :param output_activation:
+        :param kernel_size:
         """
+
         super(ImageGenerator, self).__init__(name=name)
         self.n_channels = n_channels
         self.initial_dense_activation = initial_dense_activation
@@ -126,7 +132,7 @@ class ImageGenerator(TFModelExtension):
         self.initial_filters = initial_filters
 
         self.initial_dense = Dense(
-            embedding_dimension, activation=initial_dense_activation
+            embedding_dimension, activation=initial_dense_activation, use_bias=False
         )
 
         # this assumes a few things about shapes  TODO add tests to make ensure compatible shapes
@@ -134,7 +140,14 @@ class ImageGenerator(TFModelExtension):
         self.up_sampling_blocks = []
         filters = initial_filters
         for _ in range(n_upsmpl_blocks):
-            self.up_sampling_blocks.append(UpSamplingBlock(filters, strides=(2, 2)))
+            self.up_sampling_blocks.append(
+                UpSamplingBlock(
+                    filters,
+                    strides=(2, 2),
+                    kernel_size=kernel_size,
+                    use_relu=True
+                )
+            )
             filters //= 2
 
         self.up_sampling_blocks.append(
@@ -154,6 +167,7 @@ class ImageGenerator(TFModelExtension):
             outputs = inputs
 
         outputs = self.initial_dense(outputs)
+        outputs = ReLU()(BatchNormalization()(outputs))
         outputs = Reshape(self.reshape_into)(outputs)
         for block in self.up_sampling_blocks:
             outputs = block(outputs, *args, **kwargs)
@@ -196,8 +210,10 @@ class ConditionalImageGenerator(ImageGenerator):
         output_image_size: int = 256,
         initial_filters: int = 512,
         n_channels: int = 1,
+        kernel_size: tuple = (4, 4),
+        prompt_embedding_dim: int = 128,
         name: str = "conditional_image_generator",
-        output_activation: str = "sigmoid",
+        output_activation: str = "tanh",
     ):
         """
         Assumes that the generated images are squares.
@@ -205,6 +221,8 @@ class ConditionalImageGenerator(ImageGenerator):
         :param reshape_into:
         :param name:
         :param output_activation:
+        :param kernel_size:
+        :param prompt_embedding_dim:
         """
         super(ConditionalImageGenerator, self).__init__(
             name=name,
@@ -213,10 +231,11 @@ class ConditionalImageGenerator(ImageGenerator):
             output_image_size=output_image_size,
             initial_filters=initial_filters,
             output_activation=output_activation,
-            n_channels=n_channels
+            n_channels=n_channels,
+            kernel_size=kernel_size
         )
-
-        self.noise_dense = Dense(embedding_dimension, activation="relu")
+        self.prompt_embedding_dim = prompt_embedding_dim
+        self.prompt_embedding = Dense(prompt_embedding_dim, activation="relu")
 
     def call(self, inputs, *args, **kwargs):
         """
@@ -226,8 +245,9 @@ class ConditionalImageGenerator(ImageGenerator):
         :param kwargs:
         :return:
         """
-        noise_input, conditioning_prompt = inputs
-        concatenated = Concatenate()([noise_input, conditioning_prompt])
+        noise_input, prompt = inputs
+        prompt = self.prompt_embedding(prompt)
+        concatenated = Concatenate()([noise_input, prompt])
 
         return super(ConditionalImageGenerator, self).call(
             concatenated, *args, **kwargs
