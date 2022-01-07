@@ -18,7 +18,7 @@ class DownSamplingBlock(TFModelExtension):
     def __init__(
         self,
         n_filters: int,
-        kernel_size: typing.Tuple = (4, 4),
+        kernel_size: typing.Tuple = (5, 5),
         strides: typing.Tuple = (1, 1),
         padding: str = "same",
         use_bias: bool = False,
@@ -82,20 +82,16 @@ class ImageDiscriminator(TFModelExtension):
     def __init__(
         self,
         output_dense_activation: str = None,
-        name: str = "image_discriminator",
+        name: str = "rgb_image_discriminator",
         add_input_noise: bool = False,
-        kernel_size: tuple = (4, 4),
-        **kwargs
     ):
-        super(ImageDiscriminator, self).__init__(name=name, **kwargs)
-        self.kernel_size = kernel_size
-
+        super(ImageDiscriminator, self).__init__(name=name)
         self.output_dense_activation = output_dense_activation
         self.add_input_noise = add_input_noise
         self.down_sampling_blocks = [
-            DownSamplingBlock(64, strides=(2, 2), kernel_size=kernel_size),
-            DownSamplingBlock(128, strides=(2, 2), kernel_size=kernel_size),
-            DownSamplingBlock(256, strides=(2, 2), kernel_size=kernel_size),
+            DownSamplingBlock(64, strides=(2, 2)),
+            DownSamplingBlock(128, strides=(2, 2)),
+            DownSamplingBlock(256, strides=(2, 2)),
         ]
         self.output_dense = Dense(1, activation=output_dense_activation)
 
@@ -104,10 +100,6 @@ class ImageDiscriminator(TFModelExtension):
             outputs = inputs[0]
         else:
             outputs = inputs
-
-        is_training = kwargs.get("training", True)
-        if self.add_input_noise and is_training:
-            outputs += tf.random.normal(outputs.shape)
 
         if self.add_input_noise:
             outputs += tf.random.normal(outputs.shape)
