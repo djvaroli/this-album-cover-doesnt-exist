@@ -84,9 +84,10 @@ class ImageDiscriminator(TFModelExtension):
         output_dense_activation: str = None,
         name: str = "image_discriminator",
         add_input_noise: bool = False,
-        kernel_size: tuple = (5, 5)
+        kernel_size: tuple = (4, 4),
+        **kwargs
     ):
-        super(ImageDiscriminator, self).__init__(name=name)
+        super(ImageDiscriminator, self).__init__(name=name, **kwargs)
         self.kernel_size = kernel_size
 
         self.output_dense_activation = output_dense_activation
@@ -137,8 +138,9 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
         prompt_embedding_dim: int = 128,
         add_input_noise: bool = False,
         name: str = "conditional_image_discriminator",
+        **kwargs
     ):
-        super(ImageDiscriminator, self).__init__(name=name)
+        super(ImageDiscriminator, self).__init__(name=name, **kwargs)
         self.kernel_size = kernel_size
         self.prompt_embedding_dim = prompt_embedding_dim
         self.output_dense_activation = output_dense_activation

@@ -46,8 +46,8 @@ class TFModelExtension(Model, _TFReprClass):
     Extends base Tensorflow Model functionality
     """
 
-    def __init__(self, input_shape: typing.Iterable = None, name: str = "model"):
-        super(TFModelExtension, self).__init__(name=name)
+    def __init__(self, input_shape: typing.Iterable = None, **kwargs):
+        super(TFModelExtension, self).__init__(**kwargs)
         self.__model = None
         self.input_layer_shape = input_shape
 

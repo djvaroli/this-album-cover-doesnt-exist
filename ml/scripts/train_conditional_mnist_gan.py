@@ -184,7 +184,8 @@ if __name__ == "__main__":
             output_image_size=28,
             reshape_into=(7, 7, 256),
             embedding_dimension=7 * 7 * 256,
-            prompt_embedding_dim=10
+            prompt_embedding_dim=10,
+            input_shape=[(wandb.config.noise_dimension,), (10,)]
         ),
         optimizer=Adam(learning_rate=0.0002, beta_1=0.5),
         loss_fn=generator_loss,
@@ -197,6 +198,7 @@ if __name__ == "__main__":
 
     discriminator_namespace = DiscriminatorNamespace(
         model=ConditionalImageDiscriminator(
+            input_shape=[(28, 28, 1,), (10, )],
             add_input_noise=wandb.config.discriminator_noise,
             prompt_embedding_dim=10
         ),

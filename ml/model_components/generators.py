@@ -26,7 +26,7 @@ class UpSamplingBlock(TFModelExtension):
     def __init__(
         self,
         n_filters: int,
-        kernel_size: typing.Tuple = (5, 5),
+        kernel_size: typing.Tuple = (4, 4),
         strides: typing.Tuple = (1, 1),
         padding: str = "same",
         use_bias: bool = False,
@@ -99,6 +99,7 @@ class ImageGenerator(TFModelExtension):
         name: str = "image_generator",
         initial_dense_activation: str = None,
         output_activation: str = "tanh",
+        **kwargs
     ):
         """
         Assumes that the generated images are squares.
@@ -113,7 +114,7 @@ class ImageGenerator(TFModelExtension):
         :param kernel_size:
         """
 
-        super(ImageGenerator, self).__init__(name=name)
+        super(ImageGenerator, self).__init__(name=name, **kwargs)
         self.n_channels = n_channels
         self.initial_dense_activation = initial_dense_activation
         self.embedding_dimension = embedding_dimension
@@ -144,7 +145,7 @@ class ImageGenerator(TFModelExtension):
             filters //= 2
 
         self.up_sampling_blocks.append(
-            UpSamplingBlock(n_filters=self.n_channels, activation=output_activation)
+            UpSamplingBlock(n_filters=self.n_channels, activation=output_activation, kernel_size=kernel_size)
         )
 
     def call(self, inputs, *args, **kwargs):
@@ -207,6 +208,7 @@ class ConditionalImageGenerator(ImageGenerator):
         prompt_embedding_dim: int = 128,
         name: str = "conditional_image_generator",
         output_activation: str = "tanh",
+        **kwargs
     ):
         """
         Assumes that the generated images are squares.
@@ -225,7 +227,8 @@ class ConditionalImageGenerator(ImageGenerator):
             initial_filters=initial_filters,
             output_activation=output_activation,
             n_channels=n_channels,
-            kernel_size=kernel_size
+            kernel_size=kernel_size,
+            **kwargs
         )
         self.prompt_embedding_dim = prompt_embedding_dim
         self.prompt_embedding = Dense(prompt_embedding_dim, activation="relu", use_bias=False)
