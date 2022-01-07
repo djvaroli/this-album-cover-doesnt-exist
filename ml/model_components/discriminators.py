@@ -18,7 +18,7 @@ class DownSamplingBlock(TFModelExtension):
     def __init__(
         self,
         n_filters: int,
-        kernel_size: typing.Tuple = (5, 5),
+        kernel_size: typing.Tuple = (4, 4),
         strides: typing.Tuple = (1, 1),
         padding: str = "same",
         use_bias: bool = False,
@@ -82,16 +82,19 @@ class ImageDiscriminator(TFModelExtension):
     def __init__(
         self,
         output_dense_activation: str = None,
-        name: str = "rgb_image_discriminator",
+        name: str = "image_discriminator",
         add_input_noise: bool = False,
+        kernel_size: tuple = (5, 5)
     ):
         super(ImageDiscriminator, self).__init__(name=name)
+        self.kernel_size = kernel_size
+
         self.output_dense_activation = output_dense_activation
         self.add_input_noise = add_input_noise
         self.down_sampling_blocks = [
-            DownSamplingBlock(64, strides=(2, 2)),
-            DownSamplingBlock(128, strides=(2, 2)),
-            DownSamplingBlock(256, strides=(2, 2)),
+            DownSamplingBlock(64, strides=(2, 2), kernel_size=kernel_size),
+            DownSamplingBlock(128, strides=(2, 2), kernel_size=kernel_size),
+            DownSamplingBlock(256, strides=(2, 2), kernel_size=kernel_size),
         ]
         self.output_dense = Dense(1, activation=output_dense_activation)
 
@@ -130,28 +133,42 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
     def __init__(
         self,
         output_dense_activation: str = None,
-        name: str = "conditional_image_discriminator",
+        kernel_size: tuple = (4, 4),
+        prompt_embedding_dim: int = 128,
         add_input_noise: bool = False,
+        name: str = "conditional_image_discriminator",
     ):
         super(ImageDiscriminator, self).__init__(name=name)
+        self.kernel_size = kernel_size
+        self.prompt_embedding_dim = prompt_embedding_dim
         self.output_dense_activation = output_dense_activation
         self.add_input_noise = add_input_noise
         self.down_sampling_blocks = [
-            DownSamplingBlock(64, strides=(2, 2)),
-            DownSamplingBlock(128, strides=(2, 2)),
-            DownSamplingBlock(256, strides=(2, 2)),
+            DownSamplingBlock(64, strides=(2, 2), kernel_size=kernel_size),
+            DownSamplingBlock(128, strides=(2, 2), kernel_size=kernel_size),
+            DownSamplingBlock(256, strides=(2, 2), kernel_size=kernel_size),
         ]
+
+        self.prompt_dense = Dense(prompt_embedding_dim, activation="relu")
+
+        self.unit_convolution = DownSamplingBlock(256, strides=(1, 1), kernel_size=(1, 1))
         self.output_dense = Dense(1, activation=output_dense_activation)
 
     def call(self, inputs: tf.Tensor, *args, **kwargs):
-        image_output, conditional_prompt = inputs
+        input_image, prompt = inputs
 
+        outputs = input_image
         if self.add_input_noise:
-            image_output += tf.random.normal(image_output.shape)
+            outputs += tf.random.normal(outputs.shape)
 
         for block in self.down_sampling_blocks:
-            image_output = block(image_output)
+            outputs = block(outputs)
 
-        image_output = Flatten()(image_output)
-        concatenated = Concatenate()([image_output, conditional_prompt])
-        return self.output_dense(concatenated)
+        # shape (batch_size, 1, 1, prompt_embedding_dim)
+        prompt = self.prompt_dense(prompt)[:, tf.newaxis, tf.newaxis, :]
+        repeated_prompt = tf.repeat(tf.repeat(prompt, repeats=4, axis=1), repeats=4, axis=2)
+
+        outputs = Concatenate(axis=-1)([outputs, repeated_prompt])
+        outputs = self.unit_convolution(outputs)
+        outputs = Flatten()(outputs)
+        return self.output_dense(outputs)
