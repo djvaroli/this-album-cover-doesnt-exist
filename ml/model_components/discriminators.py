@@ -152,7 +152,7 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
         self.prompt_dense = Dense(prompt_embedding_dim, activation="relu")
 
         self.unit_convolution = DownSamplingBlock(256, strides=(1, 1), kernel_size=(1, 1))
-        self.output_convolution = DownSamplingBlock(256)
+        self.output_convolution = DownSamplingBlock(256, strides=(1, 1), kernel_size=kernel_size)
         self.output_dense = Dense(1, activation=output_dense_activation)
 
     def call(self, inputs: tf.Tensor, *args, **kwargs):
