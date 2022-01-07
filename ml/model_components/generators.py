@@ -26,7 +26,7 @@ class UpSamplingBlock(TFModelExtension):
     def __init__(
         self,
         n_filters: int,
-        kernel_size: typing.Tuple = (4, 4),
+        kernel_size: typing.Tuple = (5, 5),
         strides: typing.Tuple = (1, 1),
         padding: str = "same",
         use_bias: bool = False,
@@ -95,11 +95,9 @@ class ImageGenerator(TFModelExtension):
         output_image_size: int = 256,
         initial_filters: int = 512,
         n_channels: int = 1,
-        kernel_size: tuple = (4, 4),
         name: str = "image_generator",
         initial_dense_activation: str = None,
         output_activation: str = "tanh",
-        **kwargs
     ):
         """
         Assumes that the generated images are squares.
@@ -111,10 +109,8 @@ class ImageGenerator(TFModelExtension):
         :param name:
         :param initial_dense_activation:
         :param output_activation:
-        :param kernel_size:
         """
-
-        super(ImageGenerator, self).__init__(name=name, **kwargs)
+        super(ImageGenerator, self).__init__(name=name)
         self.n_channels = n_channels
         self.initial_dense_activation = initial_dense_activation
         self.embedding_dimension = embedding_dimension
@@ -130,7 +126,7 @@ class ImageGenerator(TFModelExtension):
         self.initial_filters = initial_filters
 
         self.initial_dense = Dense(
-            embedding_dimension, activation=initial_dense_activation, use_bias=False
+            embedding_dimension, activation=initial_dense_activation
         )
 
         # this assumes a few things about shapes  TODO add tests to make ensure compatible shapes
@@ -138,14 +134,11 @@ class ImageGenerator(TFModelExtension):
         self.up_sampling_blocks = []
         filters = initial_filters
         for _ in range(n_upsmpl_blocks):
-            self.up_sampling_blocks.append(
-                UpSamplingBlock(filters, strides=(2, 2), kernel_size=kernel_size,
-                )
-            )
+            self.up_sampling_blocks.append(UpSamplingBlock(filters, strides=(2, 2)))
             filters //= 2
 
         self.up_sampling_blocks.append(
-            UpSamplingBlock(n_filters=self.n_channels, activation=output_activation, kernel_size=kernel_size)
+            UpSamplingBlock(n_filters=self.n_channels, activation=output_activation)
         )
 
     def call(self, inputs, *args, **kwargs):
@@ -203,11 +196,10 @@ class ConditionalImageGenerator(ImageGenerator):
         output_image_size: int = 256,
         initial_filters: int = 512,
         n_channels: int = 1,
-        kernel_size: tuple = (4, 4),
+        kernel_size: tuple = (5, 5),
         prompt_embedding_dim: int = 128,
         name: str = "conditional_image_generator",
         output_activation: str = "tanh",
-        **kwargs
     ):
         """
         Assumes that the generated images are squares.
@@ -226,8 +218,6 @@ class ConditionalImageGenerator(ImageGenerator):
             initial_filters=initial_filters,
             output_activation=output_activation,
             n_channels=n_channels,
-            kernel_size=kernel_size,
-            **kwargs
         )
         self.prompt_embedding_dim = prompt_embedding_dim
         self.prompt_embedding = Dense(prompt_embedding_dim, activation="relu", use_bias=False)

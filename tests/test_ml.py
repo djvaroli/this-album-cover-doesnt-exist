@@ -143,6 +143,7 @@ def test_conditional_mnist_gan_train_step():
     label_smoothing = False
     pre_processing = "unit_range"
     discriminator_noise = False
+    prompt_embedding_dim = 10
 
     generator_namespace = contexts.GeneratorNamespace(
         model=generators.ConditionalImageGenerator(
@@ -171,6 +172,7 @@ def test_conditional_mnist_gan_train_step():
         discriminator_noise=discriminator_noise,
         generator_namespace=generator_namespace,
         discriminator_namespace=discriminator_namespace,
+        prompt_embedding_dim=prompt_embedding_dim
     )
 
     # this will have 10 samples, instead of the number of batches
