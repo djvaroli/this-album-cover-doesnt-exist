@@ -12,6 +12,7 @@ ROOT = pathlib.Path(SCRIPT_DIR).parent.parent
 sys.path.append(str(ROOT))
 
 import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
 from tqdm import tqdm
 import wandb
 
@@ -29,7 +30,7 @@ from ml.training.contexts import (
 )
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset_with_labels
-from ml.scripts.common import PROCESSING_OPS, OPTIMIZERS
+from ml.scripts.common import PROCESSING_OPS
 
 
 def train_step(
@@ -165,12 +166,6 @@ if __name__ == "__main__":
         help="Kind of pre-processing to apply to image [normalize, unit_range]",
         type=str,
     )
-    parser.add_argument(
-        "--optimizer",
-        default="rmsprop",
-        help="Kind of optimizer to use for gradient descent.",
-        type=str
-    )
 
     args = parser.parse_args()
     wandb.init(
@@ -188,7 +183,7 @@ if __name__ == "__main__":
             reshape_into=(7, 7, 256),
             embedding_dimension=7 * 7 * 256,
         ),
-        optimizer=OPTIMIZERS[wandb.config.optimizer](),
+        optimizer=Adam(learning_rate=0.0002, beta_1=0.5),
         loss_fn=generator_loss,
     )
 
@@ -199,7 +194,7 @@ if __name__ == "__main__":
 
     discriminator_namespace = DiscriminatorNamespace(
         model=ConditionalImageDiscriminator(add_input_noise=wandb.config.discriminator_noise),
-        optimizer=OPTIMIZERS[wandb.config.optimizer](),
+        optimizer=Adam(learning_rate=0.0002, beta_1=0.5),
         loss_fn=d_loss,
     )
 
