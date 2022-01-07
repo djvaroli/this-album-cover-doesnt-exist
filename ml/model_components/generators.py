@@ -242,10 +242,7 @@ class ConditionalImageGenerator(ImageGenerator):
         """
         noise_input, prompt = inputs
         prompt = self.prompt_embedding(prompt)
-        if kwargs.get("ignore_prompt", False):
-            concatenated = noise_input
-        else:
-            concatenated = Concatenate()([noise_input, prompt])
+        concatenated = Concatenate()([noise_input, prompt])
 
         return super(ConditionalImageGenerator, self).call(
             concatenated, *args, **kwargs
