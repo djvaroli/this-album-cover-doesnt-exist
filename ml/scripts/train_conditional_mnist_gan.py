@@ -114,8 +114,6 @@ def train_gan(context: ConditionalMNISTGANContext):
             generator_input_noise = context.generate_noise()
             generator_fake_labels = context.generate_noise_labels()
 
-            # convert integer labels to floats
-            image_labels = tf.cast(image_labels, tf.float32)
             context.assign_inputs(
                 [generator_input_noise, generator_fake_labels],
                 [image_batch, image_labels]

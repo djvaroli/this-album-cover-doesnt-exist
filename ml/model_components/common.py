@@ -1,6 +1,7 @@
 import abc
 import typing
 from abc import ABC
+import time
 
 import tensorflow as tf
 from tensorflow.keras.layers import Input
@@ -91,7 +92,7 @@ class TFModelExtension(Model, _TFReprClass):
 
         """
         if to_file is None:
-            to_file = f"{self.model.name}.png"
+            to_file = f"{self.model.name}-{int(time.time())}.png"
 
         return tf.keras.utils.plot_model(
             self.model, to_file, show_shapes=show_shapes, *args, **kwargs

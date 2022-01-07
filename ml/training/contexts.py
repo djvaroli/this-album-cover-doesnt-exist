@@ -271,8 +271,7 @@ class ConditionalMNISTGANContext(BaseGANTrainingContext):
             reference_noise = tf.random.normal(
                 (10, self.noise_dimension), mean, stddev, **kwargs
             )
-            labels = tf.cast(tf.expand_dims(tf.cast(tf.linspace(0, 9, num=10), tf.int16), axis=0), tf.float32)
-            reference_labels = tf.tile(labels, multiples=[10, 1])
+            reference_labels = tf.linalg.diag(tf.ones(10))
             self.__reference = (reference_noise, reference_labels)
         else:
             raise Exception(
