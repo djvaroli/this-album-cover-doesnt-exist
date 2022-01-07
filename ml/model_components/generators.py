@@ -9,7 +9,6 @@ import numpy as np
 from tensorflow.keras.layers import (
     Conv2DTranspose,
     BatchNormalization,
-    LeakyReLU,
     ReLU,
     Dense,
     Reshape,
@@ -31,8 +30,7 @@ class UpSamplingBlock(TFModelExtension):
         strides: typing.Tuple = (1, 1),
         padding: str = "same",
         use_bias: bool = False,
-        activation: str = None,
-        use_relu: bool = False
+        activation: str = None
     ):
         super(UpSamplingBlock, self).__init__()
         self.n_channels = n_filters
@@ -42,7 +40,6 @@ class UpSamplingBlock(TFModelExtension):
         self.use_bias = use_bias
         self.activation = activation
 
-        final_activation = ReLU if use_relu else LeakyReLU
         self.layers_ = [
             Conv2DTranspose(
                 n_filters,
@@ -53,7 +50,7 @@ class UpSamplingBlock(TFModelExtension):
                 activation=activation,
             ),
             BatchNormalization(),
-            final_activation(),
+            ReLU(),
         ]
 
     def get_config(self):
@@ -141,11 +138,7 @@ class ImageGenerator(TFModelExtension):
         filters = initial_filters
         for _ in range(n_upsmpl_blocks):
             self.up_sampling_blocks.append(
-                UpSamplingBlock(
-                    filters,
-                    strides=(2, 2),
-                    kernel_size=kernel_size,
-                    use_relu=True
+                UpSamplingBlock(filters, strides=(2, 2), kernel_size=kernel_size,
                 )
             )
             filters //= 2
