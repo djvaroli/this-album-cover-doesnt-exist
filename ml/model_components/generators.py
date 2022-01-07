@@ -228,7 +228,7 @@ class ConditionalImageGenerator(ImageGenerator):
             kernel_size=kernel_size
         )
         self.prompt_embedding_dim = prompt_embedding_dim
-        self.prompt_embedding = Dense(prompt_embedding_dim, activation="relu")
+        self.prompt_embedding = Dense(prompt_embedding_dim, activation="relu", use_bias=False)
 
     def call(self, inputs, *args, **kwargs):
         """

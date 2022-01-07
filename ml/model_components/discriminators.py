@@ -149,7 +149,7 @@ class ConditionalImageDiscriminator(ImageDiscriminator):
             DownSamplingBlock(256, strides=(2, 2), kernel_size=kernel_size),
         ]
 
-        self.prompt_dense = Dense(prompt_embedding_dim, activation="relu")
+        self.prompt_dense = Dense(prompt_embedding_dim, activation="relu", use_bias=False)
 
         self.unit_convolution = DownSamplingBlock(256, strides=(1, 1), kernel_size=(1, 1))
         self.output_convolution = DownSamplingBlock(256, strides=(1, 1), kernel_size=kernel_size)
