@@ -161,7 +161,6 @@ class ImageGenerator(TFModelExtension):
             outputs = inputs
 
         outputs = self.initial_dense(outputs)
-        outputs = ReLU()(BatchNormalization()(outputs))
         outputs = Reshape(self.reshape_into)(outputs)
         for block in self.up_sampling_blocks:
             outputs = block(outputs, *args, **kwargs)
@@ -243,7 +242,10 @@ class ConditionalImageGenerator(ImageGenerator):
         """
         noise_input, prompt = inputs
         prompt = self.prompt_embedding(prompt)
-        concatenated = Concatenate()([noise_input, prompt])
+        if kwargs.get("ignore_prompt", False):
+            concatenated = noise_input
+        else:
+            concatenated = Concatenate()([noise_input, prompt])
 
         return super(ConditionalImageGenerator, self).call(
             concatenated, *args, **kwargs

@@ -235,6 +235,7 @@ class ConditionalMNISTGANContext(BaseGANTrainingContext):
         batch_size: int,
         noise_dimension: int,
         epochs: int,
+        prompt_embedding_dim: int,
         generator_namespace: GeneratorNamespace,
         discriminator_namespace: DiscriminatorNamespace,
         label_smoothing: bool = False,
@@ -249,6 +250,7 @@ class ConditionalMNISTGANContext(BaseGANTrainingContext):
             generator_namespace,
             discriminator_namespace,
         )
+        self.prompt_embedding_dim = prompt_embedding_dim
         self.label_smoothing = label_smoothing
         self.discriminator_noise = discriminator_noise
         self.pre_processing = pre_processing

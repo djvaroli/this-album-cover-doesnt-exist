@@ -8,7 +8,10 @@ venv/
 # directories
 mlruns
 data/database/certs
+.ipynb_checkpoints
+.idea
 
 # files
 *.json
 .env
+*.ipynb
