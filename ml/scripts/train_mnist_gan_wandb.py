@@ -12,7 +12,6 @@ ROOT = pathlib.Path(SCRIPT_DIR).parent.parent
 sys.path.append(str(ROOT))
 
 import tensorflow as tf
-from tensorflow.keras.optimizers import Adam
 from tqdm import tqdm
 import wandb
 
@@ -30,7 +29,13 @@ from ml.training.contexts import (
 )
 from ml.utilities import image_utils
 from ml.training.data import get_mnist_dataset
-from ml.scripts.common import PROCESSING_OPS
+
+
+EXPERIMENT_NAME = "GAN MNIST"
+PROCESSING_OPS = {
+    "normalize": lambda x: (x - 255.0) / 255.0,
+    "unit_range": lambda x: (x - 127.5) / 127.5,
+}
 
 
 def train_step(context: MNISTGANContext) -> dict:
@@ -174,7 +179,7 @@ if __name__ == "__main__":
             reshape_into=(7, 7, 256),
             embedding_dimension=7 * 7 * 256,
         ),
-        optimizer=Adam(1e-4),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
         loss_fn=generator_loss,
     )
 
@@ -185,7 +190,7 @@ if __name__ == "__main__":
 
     discriminator_namespace = DiscriminatorNamespace(
         model=ImageDiscriminator(add_input_noise=wandb.config.discriminator_noise),
-        optimizer=Adam(1e-4),
+        optimizer=tf.keras.optimizers.Adam(1e-4),
         loss_fn=d_loss,
     )
 
