@@ -196,7 +196,6 @@ class ConditionalImageGenerator(ImageGenerator):
         output_image_size: int = 256,
         initial_filters: int = 512,
         n_channels: int = 1,
-        kernel_size: tuple = (5, 5),
         prompt_embedding_dim: int = 128,
         name: str = "conditional_image_generator",
         output_activation: str = "tanh",
